@@ -8,7 +8,7 @@ App móvil (PWA) de entrenamiento de calistenia con poco material. Funciona sin 
 - **Rutina personalizada** según los días elegidos:
   1 día cuerpo completo · 2-3 días cuerpo completo A/B/C · 4 días torso/pierna · 5 días empuje/tracción/pierna + torso/pierna · 6 días PPL ×2 · 7 días PPL ×2 + recuperación activa.
   Series, repeticiones y descansos según objetivo (fuerza, hipertrofia, resistencia, pérdida de grasa, habilidades, salud). Calentamiento y vuelta a la calma adaptados a cada sesión; finisher por intervalos si el objetivo lo pide.
-- **75 ejercicios** en 12 familias de movimiento con niveles 1-10 (principiante → avanzado), filtrados por el material disponible y las limitaciones (muñecas, hombros, codos, rodillas, lumbar).
+- **85 ejercicios** (+17 de movilidad) en 12 familias de movimiento con niveles 1-10 (principiante → avanzado), filtrados por el material disponible y las limitaciones (muñecas, hombros, codos, rodillas, lumbar).
 - **Figuras animadas** de cada ejercicio (muñeco articulado en SVG con cinemática directa + IK), técnica, errores comunes y escalera de progresión.
 - **Modo entrenamiento** (subaplicación a pantalla completa): calentamiento guiado, registro de cada serie, cuenta atrás de descansos (±15 s, pausa, saltar), cronómetro para ejercicios isométricos, finisher por intervalos, pitidos, vibración y pantalla siempre encendida. Si sales, puedes retomarlo después.
 - **Progresión automática** (doble progresión): al completar todas las series en el máximo del rango sube a la siguiente variante; dos sesiones muy por debajo del objetivo bajan un nivel.
