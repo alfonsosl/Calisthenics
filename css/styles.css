@@ -355,3 +355,23 @@ details.fold .list { padding: 0 10px 10px; }
 .howto li::before { content: counter(h); width: 30px; height: 30px; border-radius: 50%; background: var(--ink); color: var(--on-ink); display: grid; place-items: center; font-weight: 800; }
 .howto li b { color: var(--ink); }
 .ctrl-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* ---------- Contador flotante (siempre visible abajo) ---------- */
+.ftimer { display: grid; grid-template-columns: auto 1fr auto; align-items: center; column-gap: 14px; row-gap: 8px; background: var(--card); border: 1.5px solid var(--ink); border-radius: 24px; padding: 10px 18px 12px; }
+.ftimer b { font-family: var(--f-display); font-stretch: 75%; font-weight: 800; font-size: 56px; line-height: .95; color: var(--ink); font-variant-numeric: tabular-nums; min-width: 2.2ch; }
+.ftimer .ft-l { font-family: var(--f-hand); font-size: 18px; line-height: 1.15; color: var(--ink); }
+.ftimer .ft-bar { grid-column: 1 / -1; height: 10px; border: 1.5px solid var(--ink); border-radius: 99px; overflow: hidden; }
+.ftimer .ft-bar > div { height: 100%; background: var(--ink); transition: width .25s linear; }
+.wo-actions { gap: 10px; }
+.wo-actions .hint { margin-top: -2px; }
+.ft-btn { width: 52px; height: 52px; border-radius: 50%; border: 1.5px solid var(--ink); background: var(--ink); color: var(--on-ink); font-size: 16px; font-weight: 800; cursor: pointer; letter-spacing: -2px; }
+.ft-btn:active { transform: scale(.95); }
+@media (max-height: 720px) {
+  .ftimer { padding: 8px 14px 10px; border-radius: 20px; }
+  .ftimer b { font-size: 44px; }
+  .ft-btn { width: 46px; height: 46px; }
+  .wo-fig .fig { height: 30vh; min-height: 140px; }
+  .wo-name { font-size: 30px; }
+  .wo-actions .hint { font-size: 16px; }
+  .btn.lg { min-height: 56px; }
+}

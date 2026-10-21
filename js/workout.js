@@ -187,8 +187,7 @@ const Workout = (() => {
       const n = el.querySelector('#hold-num');
       if (n) n.textContent = Math.floor(secs);
       const it = W.day.items[st.ii];
-      const r = el.querySelector('.ring .fg');
-      if (r) r.style.strokeDashoffset = String(ringLen * (1 - Math.min(1, secs / it.target[1])));
+      setProgress(el, Math.min(1, secs / it.target[1]));
       const s = Math.floor(secs);
       if (s !== lastBeep && (s === it.target[0] || s === it.target[1])) { lastBeep = s; beep(s === it.target[1] ? 1320 : 990, 180); buzz(s === it.target[1] ? [120, 80, 120] : 80); }
       return;
@@ -205,8 +204,7 @@ const Workout = (() => {
     const left = remaining();
     const n = el.querySelector('#t-num');
     if (n) n.textContent = U.fmt(Math.ceil(left));
-    const r = el.querySelector('.ring .fg');
-    if (r) r.style.strokeDashoffset = String(ringLen * (1 - left / t.total));
+    setProgress(el, left / t.total);
     const sec = Math.ceil(left);
     if (sec !== lastBeep && sec > 0 && sec <= 3) { lastBeep = sec; beep(660); }
     if (left <= 0) { beep(1100, 300); buzz([200, 100, 200]); next(); }
@@ -323,6 +321,18 @@ const Workout = (() => {
 
   /* ---------- Render ---------- */
   const ringLen = 2 * Math.PI * 54;
+  // Contador flotante: va dentro de la zona fija inferior, siempre visible sin desplazar
+  function floatTimer(id, num, label, frac, cls = '', action = '') {
+    return `<div class="ftimer ${cls}" role="timer" aria-live="off"><b id="${id}">${num}</b><span class="ft-l">${esc(label)}</span>${action || '<span></span>'}${frac == null ? '' : `<div class="ft-bar"><div style="width:${Math.max(0, Math.min(1, frac)) * 100}%"></div></div>`}</div>`;
+  }
+  // Botón redondo de pausa/reanudar dentro del contador
+  const ftPause = paused => `<button class="ft-btn" data-wo="pause" aria-label="${paused ? 'Reanudar' : 'Pausar'}">${paused ? '▶' : '❚❚'}</button>`;
+  function setProgress(el, frac) {
+    const r = el.querySelector('.ring .fg');
+    if (r) r.style.strokeDashoffset = String(ringLen * (1 - frac));
+    const b = el.querySelector('.ft-bar > div');
+    if (b) b.style.width = (Math.max(0, Math.min(1, frac)) * 100) + '%';
+  }
   function ring(numHtml, frac, cls = '') {
     return `<div class="ring ${cls}"><svg viewBox="0 0 120 120"><circle class="bg" cx="60" cy="60" r="54"/><circle class="fg" cx="60" cy="60" r="54" stroke-dasharray="${ringLen}" style="stroke-dashoffset:${ringLen * (1 - frac)}"/></svg><div class="num">${numHtml}</div></div>`;
   }
@@ -354,8 +364,8 @@ const Workout = (() => {
     const t = W.timer;
     const nav = `<div class="ctrl-row"><button class="btn sm" data-wo="prev">◀ Anterior</button><button class="btn sm" data-wo="skip">Saltar ▶</button></div>`;
     if (!t.started) return `<button class="btn primary lg block" data-wo="go">▶ Empezar</button><p class="hint">Colócate en posición y pulsa Empezar</p>${nav}`;
-    if (t.paused != null) return `<button class="btn primary lg block" data-wo="pause">▶ Reanudar</button><p class="hint">En pausa</p>${nav}`;
-    return `<button class="btn lg block" data-wo="pause">⏸ Pausa</button><p class="hint">Pasará solo al siguiente cuando acabe el tiempo</p>${nav}`;
+    if (t.paused != null) return `<button class="btn primary lg block" data-wo="pause">▶ Reanudar</button>${nav}`;
+    return nav; // en marcha: la pausa está en el propio contador
   }
   const stateLabel = t => (!t.started ? 'Pulsa Empezar cuando estés listo' : t.paused != null ? 'En pausa' : '');
 
@@ -368,8 +378,7 @@ const Workout = (() => {
       <div class="phase">${phase}</div><h2 class="wo-name">${esc(m.n)}</h2><p class="muted">${esc(m.desc)}</p>
       ${m.fig && Fig.has(m.fig) ? `<div class="wo-fig">${Fig.svg(m.fig, { animate: true, marks: cueMarks(m.cues) })}</div>` : ''}
       ${m.cues && m.cues.length ? `<div class="wo-keys">${App.keyList(m.cues)}</div>` : ''}
-      ${ring(`<div><b id="t-num">${U.fmt(Math.ceil(left))}</b><span>${stateLabel(W.timer)}</span></div>`, left / W.timer.total, 'small work')}
-      <div class="wo-actions">${cdControls()}</div></div>`;
+      <div class="wo-actions">${floatTimer('t-num', U.fmt(Math.ceil(left)), stateLabel(W.timer) || 'Tiempo restante', left / W.timer.total, '', W.timer.started && W.timer.paused == null ? ftPause(false) : '')}${cdControls()}</div></div>`;
   }
 
   function viewSet(st) {
@@ -389,15 +398,14 @@ const Workout = (() => {
       ${running ? '' : `<div class="wo-keys">${App.keyList(ex.cues)}</div>
       ${ex.safe && ex.safe[0] ? `<p class="wo-safe">🛡️ ${esc(ex.safe[0])}</p>` : ''}
       ${lastTxt ? `<div class="lastline">Última vez: ${lastTxt}</div>` : '<div class="lastline">Primera vez: elige una cifra cómoda con buena técnica.</div>'}`}`;
-    const pauseBtn = p => `<button class="btn block" data-wo="pause">${p ? '▶ Reanudar' : '⏸ Pausa'}</button>`;
 
     if (ex.type === 'time') {
       if (t && t.kind === 'prep') {
-        return head + `${ring(`<div><b id="prep-num">${Math.max(0, Math.ceil((t.end - Date.now()) / 1000))}</b><span>Prepárate</span></div>`, 1)}<div class="wo-actions"><button class="btn ghost block" data-wo="cancel-hold">Cancelar</button></div></div>`;
+        return head + `<div class="wo-actions">${floatTimer('prep-num', Math.max(0, Math.ceil((t.end - Date.now()) / 1000)), 'Prepárate…', 1)}<button class="btn ghost block" data-wo="cancel-hold">Cancelar</button></div></div>`;
       }
       if (t && t.kind === 'hold') {
         const secs = elapsed(t);
-        return head + `${ring(`<div><b id="hold-num">${Math.floor(secs)}</b><span>${t.pausedAt ? 'En pausa' : `segundos · objetivo ${it.target[0]}–${it.target[1]}`}</span></div>`, Math.min(1, secs / it.target[1]), 'work')}<div class="wo-actions"><button class="btn primary lg block" data-wo="stop-hold">⏹ Terminar</button><p class="hint">Aguanta y pulsa Terminar cuando no puedas mantener la postura</p>${pauseBtn(t.pausedAt)}</div></div>`;
+        return head + `<div class="wo-actions">${floatTimer('hold-num', Math.floor(secs), t.pausedAt ? 'En pausa' : `seg · objetivo ${it.target[0]}–${it.target[1]}`, Math.min(1, secs / it.target[1]), 'hold', ftPause(!!t.pausedAt))}<button class="btn primary lg block" data-wo="stop-hold">⏹ Terminar</button><p class="hint">Pulsa Terminar cuando pierdas la postura</p></div></div>`;
       }
       const v = defaultVal(it, st.s);
       return head + `<div class="wo-actions">
@@ -409,8 +417,7 @@ const Workout = (() => {
     }
     // Series por repeticiones: Empezar -> Terminar -> anotar repeticiones
     if (t && t.kind === 'reps') {
-      return head + `${ring(`<div><b id="run-num">${U.fmt(elapsed(t))}</b><span>${t.pausedAt ? 'En pausa' : 'Serie en curso'}</span></div>`, 1, 'small work')}
-        <div class="wo-actions"><button class="btn primary lg block" data-wo="end-reps">✓ Terminar serie</button><p class="hint">Haz tus repeticiones y pulsa Terminar</p></div></div>`;
+      return head + `<div class="wo-actions">${floatTimer('run-num', U.fmt(elapsed(t)), 'Serie en curso · tiempo', null)}<button class="btn primary lg block" data-wo="end-reps">✓ Terminar serie</button><p class="hint">Haz tus repeticiones y pulsa Terminar</p></div></div>`;
     }
     if (t && t.kind === 'log') {
       const v = defaultVal(it, st.s);
@@ -441,8 +448,7 @@ const Workout = (() => {
     return `${header(`Finisher · ronda ${st.r + 1}/${f.rounds}`)}<div class="wo-body">
       <div class="phase">⚡ Finisher · ronda ${st.r + 1} de ${f.rounds}</div><h2 class="wo-name">${esc(ex.n)}</h2><p class="muted small">Máximas repeticiones con buena técnica</p>
       <div class="wo-fig">${Fig.svg(ex.id, { animate: true, marks: cueMarks(ex.cues) })}</div>
-      ${ring(`<div><b id="t-num">${U.fmt(Math.ceil(left))}</b><span>${stateLabel(W.timer)}</span></div>`, left / W.timer.total, 'small work')}
-      <div class="wo-actions">${cdControls()}</div></div>`;
+      <div class="wo-actions">${floatTimer('t-num', U.fmt(Math.ceil(left)), stateLabel(W.timer) || 'Tiempo restante', left / W.timer.total, '', W.timer.started && W.timer.paused == null ? ftPause(false) : '')}${cdControls()}</div></div>`;
   }
 
   function buildSession() {

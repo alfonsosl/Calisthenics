@@ -1,5 +1,5 @@
 /* Service worker: la app funciona sin conexión tras la primera visita */
-const CACHE = 'calistenia-v5';
+const CACHE = 'calistenia-v6';
 const ASSETS = [
   './', './index.html', './manifest.webmanifest', './css/styles.css',
   './js/figures.js', './js/poses.js', './js/exercises.js', './js/keys.js', './js/planner.js', './js/app.js', './js/music.js', './js/workout.js',
