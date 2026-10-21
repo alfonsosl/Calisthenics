@@ -52,7 +52,7 @@ const KEYS = {
   weighted_dip: { c: [['el', 'Mismo rango que sin peso'], ['sh', 'Hombros abajo'], ['back', 'Mochila pegada a la espalda']], s: ['Sube el peso poco a poco (2-5 kg).'] },
 
   /* Tracción vertical */
-  prone_pulldown: { c: [['el', 'Codos hacia las costillas'], ['back', 'Junta las escápulas al final'], ['head', 'Mira al suelo, cuello largo']], s: ['Eleva el pecho poco: no fuerces la zona lumbar.'] },
+  prone_pulldown: { c: [['ha', 'Toalla tensa: tira de ella hacia fuera'], ['el', 'Codos hacia las costillas (forma de W)'], ['head', 'Mira al suelo, cuello largo']], s: ['Eleva el pecho poco: no fuerces la zona lumbar.'] },
   dead_hang: { c: [['sh', 'Hombros ligeramente activos'], ['ha', 'Agarre completo con el pulgar'], ['ft', 'Piernas juntas, sin balanceo']], s: ['Baja con cuidado: no saltes desde arriba.'] },
   band_pulldown: { c: [['el', 'Codos hacia las costillas'], ['chest', 'Pecho alto'], ['sh', 'Hombros abajo al tirar']], s: ['Revisa que la banda esté bien anclada antes de tirar.'] },
   scap_pull: { c: [['el', 'Codos siempre estirados'], ['sh', 'Baja los hombros, aléjalos de las orejas'], ['chest', 'El pecho sube un poco']], s: ['Movimiento corto y controlado.'] },

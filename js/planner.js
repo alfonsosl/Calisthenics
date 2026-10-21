@@ -261,6 +261,7 @@ const Planner = (() => {
     const day = plan.days[session.dayIndex];
     if (!day) return changes;
     for (const entry of session.entries) {
+      if (entry.aborted) continue; // ejercicio saltado o adaptado por molestias
       const item = day.items.find(i => i.exId === entry.exId);
       if (!item) continue;
       const hist = entriesFor(sessions.filter(s => s.id !== session.id), entry.exId);

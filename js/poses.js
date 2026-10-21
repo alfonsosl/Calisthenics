@@ -133,11 +133,12 @@
     const mk = hand => ({ t: 180, ua: 180, fa: 180, th: 0, sn: -90, fd: -100, an: ['kn', 0, -3], ik: { ha: hand } });
     return { frames: [mk([10, -152, 1]), mk([16, -108, 1])], props: [floor, { k: 'band', from: [34, -200], to: 'ha' }, { k: 'door', x: 40, hy: -200 }] };
   })());
+  // Tumbado boca abajo con el pecho algo elevado: brazos estirados al frente -> codos a las costillas
   def('prone_pulldown', {
     frames: [
-      { t: 96, n: 100, ua: 103, fa: 103, th: -92, sn: -92, fd: -170, an: ['hip', 0, -6] },
-      { t: 99, n: 104, ua: -10, fa: 80, th: -93, sn: -93, fd: -170, an: ['hip', 0, -6] },
-    ], props: [floor],
+      { view: 'top', t: 180, ua: 158, fa: 164, ua2: -158, fa2: -164, th: 4, sn: 2, th2: -4, sn2: -2, fd: 180, fd2: 180, an: ['hip', 0, 0] },
+      { view: 'top', t: 180, ua: 58, fa: 150, ua2: -58, fa2: -150, th: 4, sn: 2, th2: -4, sn2: -2, fd: 180, fd2: 180, an: ['hip', 0, 0] },
+    ], props: [{ k: 'mat', x: -46, y: -120, w: 92, h: 200 }, { k: 'towel' }], caption: 'Vista desde arriba: brazos en Y → codos a las costillas (W)',
   });
 
   /* ---------------- Tracción horizontal ---------------- */

@@ -43,7 +43,7 @@ const Fig = (() => {
   // Rellena los valores por defecto para poder interpolar entre poses
   function normalize(p) {
     const q = { ...p };
-    const front = q.view === 'front';
+    const front = q.view === 'front' || q.view === 'top';
     const arm2Free = p.ua2 == null && p.fa2 == null;
     const leg2Free = p.th2 == null && p.sn2 == null;
     q.n = q.n ?? q.t;
@@ -61,7 +61,7 @@ const Fig = (() => {
 
   function joints(p0) {
     const p = p0.__n ? p0 : normalize(p0);
-    const front = p.view === 'front';
+    const front = p.view === 'front' || p.view === 'top';
     const j = {};
     j.hip = [0, 0];
     j.sh = add(j.hip, dir(p.t, L.torso));
@@ -120,6 +120,7 @@ const Fig = (() => {
 
   function drawProp(pr, j) {
     switch (pr.k) {
+      case 'mat': return `<rect class="pmat" x="${pr.x}" y="${pr.y}" width="${pr.w}" height="${pr.h}" rx="10"/>`;
       case 'floor': return `<line class="pf" x1="-600" y1="${pr.y || 0}" x2="600" y2="${pr.y || 0}"/>`;
       case 'wall': return `<line class="pw" x1="${pr.x}" y1="${pr.y1 ?? 0}" x2="${pr.x}" y2="${pr.y2 ?? -170}"/>`;
       case 'box': return `<rect class="pb" x="${pr.x}" y="${pr.y}" width="${pr.w}" height="${pr.h}" rx="2"/>`;
@@ -219,13 +220,16 @@ const Fig = (() => {
     if (outline) o += line(hp, kn, W.shorts + 3, 'ol') + line(kn, ft, W.sn + 3, 'ol') + line(ft, toe, W.shoe + 3, 'ol');
     return o + line(hp, kn, W.th, 'sk' + k) + line(hp, mix(hp, kn, 0.55), W.shorts, 'st' + k) + line(kn, ft, W.sn, 'sk' + k) + line(ft, toe, W.shoe, 'so' + k) + dot(ft, W.heel, 'sof' + k);
   }
-  function head(j, front) {
+  function head(j, front, top) {
     const c = j.head;
     const v = unit(sub(j.head, j.sh));
     const f = [-v[1], v[0]];
     const neckA = j.sh, neckB = sub(c, mul(v, 6));
     let o = line(neckA, neckB, W.neck, 'sk');
-    if (front) {
+    if (top) {
+      // Vista desde arriba: se ve la nuca
+      o += dot(sub(c, mul(v, 0.8)), W.head - 0.5, 'skf') + dot(add(c, mul(v, 0.6)), W.head - 1.2, 'hairf');
+    } else if (front) {
       o += dot(add(c, mul(v, 1.8)), W.head, 'hairf') + dot(sub(c, mul(v, 0.8)), W.head - 1, 'skf');
       o += dot(add(add(c, mul(f, 3.4)), mul(v, 0.4)), 1.3, 'eye') + dot(add(sub(c, mul(f, 3.4)), mul(v, 0.4)), 1.3, 'eye');
     } else {
@@ -263,7 +267,9 @@ const Fig = (() => {
     return lines + rings + badges;
   }
 
-  function drawBody(j0, front, props, opts = {}) {
+  function drawBody(j0, view, props, opts = {}) {
+    const top = view === 'top';
+    const front = !!view;
     let j = j0;
     let fr = frame(j, front);
     if (opts.floor) {
@@ -278,8 +284,9 @@ const Fig = (() => {
     if (front) {
       s += leg(j.h2, j.kn2, j.ft2, j.toe2, false, true) + leg(j.h1, j.kn, j.ft, j.toe, false, true);
       s += poly(fr.torso, 'shf') + poly(fr.shorts, 'stf');
-      s += head(j, true);
+      s += head(j, true, top);
       s += arm(j.s2, j.el2, j.ha2, false, true) + arm(j.s1, j.el, j.ha, false, true);
+      for (const pr of props || []) if (pr.k === 'towel' && top) s += line(j.ha2, j.ha, 5, 'ptowel-l');
     } else {
       s += leg(j.hip, j.kn2, j.ft2, j.toe2, true, false);
       s += arm(j.sh, j.el2, j.ha2, true, false);
@@ -289,6 +296,7 @@ const Fig = (() => {
       s += leg(j.hip, j.kn, j.ft, j.toe, false, true);
       s += arm(j.sh, j.el, j.ha, false, true);
     }
+    for (const pr of props || []) if (pr.k === 'towel' && !top) s += `<rect class="ptowel" x="${f1(j.ha[0] - 7)}" y="${f1(j.ha[1] - 4)}" width="14" height="8" rx="3"/>`;
     s += drawMarks(j, fr, opts.marks);
     return s;
   }
@@ -308,6 +316,7 @@ const Fig = (() => {
     }
     for (const pr of spec.props || []) {
       if (pr.k === 'floor') inc(x0, (pr.y || 0) + 2);
+      else if (pr.k === 'mat') { inc(pr.x, pr.y); inc(pr.x + pr.w, pr.y + pr.h); }
       else if (pr.k === 'wall') { inc(pr.x - 2, y0); inc(pr.x + 2, y1); }
       else if (pr.k === 'box' || pr.k === 'chair' || pr.k === 'table') { inc(pr.x, pr.y - (pr.back ? 40 : 0)); inc(pr.x + pr.w, pr.y + (pr.h || 0)); if (pr.k !== 'box') inc(pr.x, 2); }
       else if (pr.k === 'bar') { inc(pr.x - 6, pr.y - 6); inc(pr.x + 6, pr.y + 6); }
@@ -338,7 +347,7 @@ const Fig = (() => {
   function framesOf(id) {
     if (!prepared.has(id)) {
       const spec = registry.get(id);
-      prepared.set(id, { spec, frames: spec.frames.map(prep), vb: bbox(spec), floor: (spec.props || []).some(p => p.k === 'floor') });
+      prepared.set(id, { spec, frames: spec.frames.map(prep), vb: bbox(spec), view: spec.frames[0].view === 'top' ? 'top' : spec.frames[0].view === 'front', floor: (spec.props || []).some(p => p.k === 'floor') });
     }
     return prepared.get(id);
   }
@@ -373,7 +382,7 @@ const Fig = (() => {
     for (const o of live) {
       if (now - o.last < 33) continue;
       o.last = now;
-      o.g.innerHTML = drawBody(poseAt(o.P, now - o.start), o.P.spec.frames[0].view === 'front', o.P.spec.props, { floor: o.P.floor, marks: o.marks });
+      o.g.innerHTML = drawBody(poseAt(o.P, now - o.start), o.P.view, o.P.spec.props, { floor: o.P.floor, marks: o.marks });
     }
     if (live.length) requestAnimationFrame(tick); else rafOn = false;
   }
@@ -388,7 +397,7 @@ const Fig = (() => {
     const still = frame ?? spec.still ?? spec.frames.length - 1;
     const j = joints(P.frames[Math.min(still, P.frames.length - 1)]);
     const mk = marks && marks.length ? marks : null;
-    const front = spec.frames[0].view === 'front';
+    const front = P.view;
     const propsHtml = (spec.props || []).filter(p => !(p.k === 'band' && typeof p.to === 'string') && p.k !== 'pack' && p.k !== 'arrow').map(p => drawProp(p, j)).join('');
     const arrows = (spec.props || []).filter(p => p.k === 'arrow').map(p => drawProp(p, j)).join('');
     // La barra y las anillas se dibujan también delante, para que las manos no las tapen
@@ -419,5 +428,6 @@ const Fig = (() => {
     return best;
   }
 
-  return { define, has, svg, activate, joints, solve, L, ids: () => [...registry.keys()] };
+  const caption = id => (registry.get(id) || {}).caption || '';
+  return { caption, define, has, svg, activate, joints, solve, L, ids: () => [...registry.keys()] };
 })();

@@ -327,7 +327,7 @@ const App = (() => {
       hero = `<div class="card hero"><div class="phase">Hoy toca</div><h2>${esc(d.name)}</h2><p class="muted small">~${Planner.estimateMin(d)} min en total</p>
         <div class="flow"><span>🔥 Calentamiento<br><b>${Planner.mobMin(d.warmup)} min</b></span><span>💪 ${d.items.length} ejercicios${d.finisher ? ' + finisher' : ''}<br><b>${Math.max(1, Planner.estimateMin(d) - Planner.mobMin(d.warmup) - Planner.mobMin(d.cooldown))} min</b></span><span>🧘 Estiramientos<br><b>${Planner.mobMin(d.cooldown)} min</b></span></div>
         <div class="row wrap" style="gap:6px;margin-bottom:12px">${d.items.map(it => `<span class="badge">${esc(EX[it.exId].n)}</span>`).join('')}</div>
-        <button class="btn primary lg block" data-act="start" data-d="${di}">▶ Empezar entrenamiento</button></div>`;
+        <button class="btn primary lg block" data-act="start" data-d="${di}">▶ Empezar entrenamiento</button>${window.Music ? Music.heroLink() : ''}</div>`;
     } else {
       const next = plan.days.slice().sort((a, b) => ((a.weekday - today + 7) % 7) - ((b.weekday - today + 7) % 7))[0];
       hero = `<div class="card hero"><div class="phase">Hoy</div><h2>Día de descanso 😌</h2><p class="muted small">Próxima sesión: <b>${Planner.DAYS[next.weekday]}</b> · ${esc(next.name)}</p><p class="small">Caminar, estirar o movilidad suave ayudan a recuperar.</p><button class="btn ghost block" data-act="pick-day">Entrenar igualmente</button></div>`;
@@ -423,7 +423,7 @@ const App = (() => {
     const item = ctx ? st.plan.days[ctx.di].items[ctx.ii] : null;
     const html = `
       <div class="sheet-head"><div><h2 style="margin-bottom:4px">${esc(ex.n)}</h2><span class="badge ${U.lvlCls(ex.lvl)}">Nivel ${ex.lvl} · ${LEVEL_NAMES(ex.lvl)}</span> <span class="badge">${FAMILIES[ex.fam].name}</span></div><button class="icon-btn" data-act="close">✕</button></div>
-      <div class="fig-hero">${Fig.svg(id, { animate: true, marks: cueMarks(ex.cues) })}<div class="tiny muted center">Los números señalan los puntos clave de la lista</div></div>
+      <div class="fig-hero">${Fig.svg(id, { animate: true, marks: cueMarks(ex.cues) })}<div class="tiny muted center">${Fig.caption(id) ? esc(Fig.caption(id)) + ' · ' : ''}Los números señalan los puntos clave</div></div>
       ${item && item.exId === id ? `<div class="card tight row between"><span><b>${item.sets} × ${U.targetText(item, ex)}</b></span><span class="muted small">Descanso ${item.rest}s</span></div>` : ''}
       <p>${esc(ex.desc)}</p>
       <p class="small"><b>Músculos:</b> <span class="muted">${esc(ex.musc)}</span><br><b>Material:</b> <span class="muted">${esc(eqNames)}</span></p>
@@ -525,7 +525,7 @@ const App = (() => {
       <div class="chips" style="margin-bottom:10px">${c('libFam', 'all', 'Todos')}${Object.entries(FAMILIES).map(([k, f]) => c('libFam', k, f.short)).join('')}</div>
       <div class="chips" style="margin-bottom:10px">${c('libLvl', 'all', 'Todos los niveles')}${['Principiante', 'Intermedio', 'Avanzado'].map(l => c('libLvl', l, l)).join('')}</div>
       <div class="chips" style="margin-bottom:14px"><button class="chip ${ui.libMine ? 'on' : ''}" data-act="lib-mine">🎒 Solo con mi material</button></div>
-      <div class="list">${list.map(e => `<button class="li" data-act="ex" data-id="${e.id}"><div class="thumb">${Fig.svg(e.id)}</div><div class="grow"><b>${esc(e.n)}</b><div class="meta">${FAMILIES[e.fam].name}</div><span class="badge ${U.lvlCls(e.lvl)}">Nv ${e.lvl}</span></div><span class="chev">›</span></button>`).join('') || '<div class="li muted">No hay ejercicios con estos filtros.</div>'}</div>`;
+      ${list.length ? `<div class="exgrid">${list.map(e => `<button class="excard" data-act="ex" data-id="${e.id}">${Fig.svg(e.id)}<b>${esc(e.n)}</b><span class="meta">${FAMILIES[e.fam].short}</span><span><span class="badge ${U.lvlCls(e.lvl)}">Nivel ${e.lvl}</span></span></button>`).join('')}</div>` : '<div class="card muted">No hay ejercicios con estos filtros.</div>'}`;
   }
 
   /* ================= PERFIL ================= */
@@ -552,10 +552,13 @@ const App = (() => {
       </div>
       <div class="section-title">Entrenamiento</div>
       ${tog('auto', 'Progresión automática', 'Sube o baja de variante según tus resultados')}
+      ${tog('autoStart', 'Empezar los ejercicios solos', 'Si está desactivado, cada ejercicio espera a que pulses «Empezar»')}
       ${tog('sound', 'Sonidos', 'Pitidos en la cuenta atrás')}
       ${tog('vibrate', 'Vibración', 'Al terminar descansos e intervalos')}
       <label class="field"><span>Cuenta atrás antes de ejercicios por tiempo</span><select data-act="prep">${[3, 5, 10].map(v => `<option value="${v}" ${set.prep === v ? 'selected' : ''}>${v} segundos</option>`).join('')}</select></label>
       <label class="field"><span>Tema</span><select data-act="theme">${[['auto', 'Automático'], ['dark', 'Oscuro'], ['light', 'Claro']].map(([v, l]) => `<option value="${v}" ${set.theme === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+      <div class="section-title">Música</div>
+      ${window.Music ? Music.settingsHtml() : ''}
       <div class="section-title">Instalación</div>
       ${installCard()}
       <div class="section-title">Datos</div>
@@ -729,6 +732,7 @@ const App = (() => {
     applyTheme();
     bind();
     if (S().plan && S().profile && Planner.refreshMobility(S().plan, S().profile)) Store.save();
+    if (window.Music) Music.handleRedirect();
     const h = location.hash.slice(1);
     if (['home', 'plan', 'progress', 'library', 'profile'].includes(h)) view = h;
     render();

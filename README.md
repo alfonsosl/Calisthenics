@@ -11,7 +11,8 @@ App móvil (PWA) de entrenamiento de calistenia con poco material. Funciona sin 
 - **85 ejercicios** (+17 de movilidad) en 12 familias de movimiento con niveles 1-10 (principiante → avanzado), filtrados por el material disponible y las limitaciones (muñecas, hombros, codos, rodillas, lumbar).
 - **Figuras animadas con aspecto humano** de cada ejercicio (SVG con cinemática directa + IK), con los **puntos clave numerados sobre la figura** (articulaciones y líneas de alineación), postura correcta, pautas para no lesionarse, errores comunes y escalera de progresión.
 - **Calentamiento (5-7 min) y estiramientos (4-6 min)** en cada sesión, adaptados a los músculos del día, cada uno con su figura animada.
-- **Modo entrenamiento** (subaplicación a pantalla completa): calentamiento guiado, registro de cada serie, cuenta atrás de descansos (±15 s, pausa, saltar), cronómetro para ejercicios isométricos, finisher por intervalos, pitidos, vibración y pantalla siempre encendida. Si sales, puedes retomarlo después.
+- **Modo entrenamiento** (subaplicación a pantalla completa): cada ejercicio, calentamiento y estiramiento empieza parado y arranca con **▶ Empezar**; se puede pausar y reanudar. Botón **✋ Parar** siempre visible: detiene el tiempo (y la música) y permite continuar, pasar a una variante más fácil, saltar el ejercicio por molestias o terminar, con avisos de seguridad. Confirmación antes de saltar series o ejercicios. Cuenta atrás de descansos (±15 s), cronómetro para isométricos, finisher por intervalos, pitidos, vibración y pantalla siempre encendida.
+- **Música con Spotify**: guarda tu playlist y ábrela con un toque; opcionalmente (Premium) controla la reproducción desde la app con la Web API oficial (OAuth PKCE, sin servidor), con pausa automática al pulsar «Parar».
 - **Progresión automática** (doble progresión): al completar todas las series en el máximo del rango sube a la siguiente variante; dos sesiones muy por debajo del objetivo bajan un nivel.
 - **Progreso**: sesiones por semana, evolución por ejercicio, récords, peso corporal e historial.
 - **Recomendaciones**: energía (Mifflin-St Jeor), proteína, hidratación, sueño, estrés, volumen, material que conviene comprar, lesiones y avisos según el historial (estancamiento, descarga, inactividad).
@@ -64,7 +65,8 @@ js/exercises.js       Base de datos de ejercicios, material y movilidad
 js/keys.js            Postura correcta, puntos clave y prevención de lesiones
 js/planner.js         Evaluación de nivel, generación de rutina, progresión y recomendaciones
 js/app.js             Interfaz: cuestionario, inicio, rutina, progreso, biblioteca, perfil
-js/workout.js         Modo entrenamiento con temporizadores
+js/workout.js         Modo entrenamiento con temporizadores y botón de parada
+js/music.js           Integración con Spotify
 ```
 
 > Aviso: la app ofrece recomendaciones generales y no sustituye el consejo de profesionales sanitarios.
