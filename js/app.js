@@ -101,8 +101,15 @@ const App = (() => {
   }
 
   function tabbar() {
-    const tabs = [['home', '🏠', 'Inicio'], ['plan', '📋', 'Rutina'], ['progress', '📈', 'Progreso'], ['library', '📚', 'Ejercicios'], ['profile', '👤', 'Perfil']];
-    return `<nav class="tabbar"><div class="in">${tabs.map(([k, i, n]) => `<button class="tab ${view === k ? 'on' : ''}" data-act="tab" data-v="${k}"><span class="ti">${i}</span>${n}</button>`).join('')}</div></nav>`;
+    const I = {
+      home: '<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+      plan: '<rect x="5" y="4" width="14" height="17" rx="2.5"/><path d="M9 3.5h6v3H9zM8.5 11h7M8.5 15h5"/>',
+      progress: '<path d="M3 20h18M6 20v-7M11 20V8M16 20v-4M20 20V5"/>',
+      library: '<path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H19v15H6.5A1.5 1.5 0 0 0 5 19.5zM5 19.5A1.5 1.5 0 0 0 6.5 21H19"/>',
+      profile: '<circle cx="12" cy="8" r="4"/><path d="M4 21c1.4-4 4.4-6 8-6s6.6 2 8 6"/>',
+    };
+    const tabs = [['home', 'Inicio'], ['plan', 'Rutina'], ['progress', 'Progreso'], ['library', 'Ejercicios'], ['profile', 'Perfil']];
+    return `<nav class="tabbar"><div class="in">${tabs.map(([k, n]) => `<button class="tab ${view === k ? 'on' : ''}" data-act="tab" data-v="${k}" aria-label="${n}"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true">${I[k]}</svg>${n}</button>`).join('')}</div></nav>`;
   }
 
   function go(v) { view = v; window.scrollTo(0, 0); render(); try { history.replaceState(null, '', '#' + v); } catch (e) { /* noop */ } }
@@ -185,15 +192,14 @@ const App = (() => {
 
   const OB_STEPS = [
     { id: 'welcome', render: () => `
-      <div style="padding-top:24px"><h1>Calistenia</h1><p class="muted">Tu entrenador de peso corporal. Responde unas preguntas (2 min) y diseñaremos una rutina adaptada a tu cuerpo, tu nivel, tus objetivos y el material que tienes.</p></div>
-      <div class="welcome-figs">${Fig.svg('pushup', { animate: true })}${Fig.svg('pullup', { animate: true })}${Fig.svg('squat', { animate: true })}</div>
-      <div class="card"><div class="stack small">
-        <div>🎯 Rutina personalizada según tus días disponibles</div>
-        <div>🧍 Figuras animadas con la técnica de cada ejercicio</div>
-        <div>📈 Registro de cada sesión y subida de nivel automática</div>
-        <div>⏱️ Modo entrenamiento con temporizador de descansos</div>
-        <div>🔒 Tus datos se quedan en tu móvil</div>
-      </div></div>` },
+      <div class="splash"><h1>Calis<br>tenia</h1>${Fig.svg('jumping_jack', { animate: true })}<p class="hand">Entrena donde quieras,<br>con lo que tengas.</p></div>
+      <div class="feature-list">
+        <div>Rutina a tu medida según tus días libres</div>
+        <div>Figuras animadas con la técnica correcta</div>
+        <div>Empezar, pausar y parar en cada ejercicio</div>
+        <div>Registro de sesiones y subida de nivel</div>
+        <div>Tus datos se quedan en tu móvil</div>
+      </div>` },
     { id: 'basics', title: 'Datos básicos', valid: () => ob.age >= 12 && ob.age <= 95 && ob.weight >= 30 && ob.weight <= 250 && ob.height >= 120 && ob.height <= 230, render: () => `
       <label class="field"><span>¿Cómo te llamas?</span><input type="text" data-bind="name" value="${esc(ob.name)}" placeholder="Tu nombre (opcional)" maxlength="30"></label>
       <label class="field"><span>Sexo (para estimar el gasto energético)</span></label>
@@ -325,7 +331,8 @@ const App = (() => {
     } else if (di >= 0) {
       const d = plan.days[di];
       hero = `<div class="card hero"><div class="phase">Hoy toca</div><h2>${esc(d.name)}</h2><p class="muted small">~${Planner.estimateMin(d)} min en total</p>
-        <div class="flow"><span>🔥 Calentamiento<br><b>${Planner.mobMin(d.warmup)} min</b></span><span>💪 ${d.items.length} ejercicios${d.finisher ? ' + finisher' : ''}<br><b>${Math.max(1, Planner.estimateMin(d) - Planner.mobMin(d.warmup) - Planner.mobMin(d.cooldown))} min</b></span><span>🧘 Estiramientos<br><b>${Planner.mobMin(d.cooldown)} min</b></span></div>
+        <div class="hero-fig">${Fig.svg(d.items[0].exId, { animate: true })}</div>
+        <div class="flow"><span>Calentamiento<br><b>${Planner.mobMin(d.warmup)} min</b></span><span>${d.items.length} ejercicios${d.finisher ? ' + finisher' : ''}<br><b>${Math.max(1, Planner.estimateMin(d) - Planner.mobMin(d.warmup) - Planner.mobMin(d.cooldown))} min</b></span><span>Estiramientos<br><b>${Planner.mobMin(d.cooldown)} min</b></span></div>
         <div class="row wrap" style="gap:6px;margin-bottom:12px">${d.items.map(it => `<span class="badge">${esc(EX[it.exId].n)}</span>`).join('')}</div>
         <button class="btn primary lg block" data-act="start" data-d="${di}">▶ Empezar entrenamiento</button>${window.Music ? Music.heroLink() : ''}</div>`;
     } else {
@@ -336,7 +343,7 @@ const App = (() => {
     const recos = Planner.recommendations(p, plan, st.sessions);
     const lastChanges = (st.sessions[st.sessions.length - 1]?.changes || []).filter(c => !c.applied);
     return `
-      <div class="top"><div><div class="small muted">${new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</div><h1>${hello}${p.name ? ', ' + esc(p.name) : ''}</h1></div></div>
+      <div class="top"><div><div class="small muted">${new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</div><h1>${p.name ? 'Hola, ' + esc(p.name) : hello}</h1><p class="hand" style="margin:4px 0 0">Ven por el sudor, quédate por el progreso.</p></div></div>
       ${hero}
       <div class="card tight">${weekStrip()}</div>
       ${!S().settings.hideInstall && !((window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone) ? '<div class="card tight row"><span style="font-size:24px">📲</span><div class="grow small"><b>Instálala en tu móvil</b><div class="muted">Icono propio y uso sin conexión.</div></div><button class="btn sm primary" data-act="go-install">Cómo</button><button class="icon-btn" data-act="hide-install" aria-label="Ocultar">✕</button></div>' : ''}

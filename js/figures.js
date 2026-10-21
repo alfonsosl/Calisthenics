@@ -211,13 +211,14 @@ const Fig = (() => {
   function arm(s, e, h, b, outline) {
     const k = b ? 'b' : '';
     let o = '';
-    if (outline) o += line(s, e, W.sleeve + 3, 'ol') + line(e, h, W.fa + 3, 'ol') + dot(h, W.hand + 1.5, 'olf');
+    // Ilustración de línea: cada segmento lleva su contorno
+    o += line(s, e, W.sleeve + 3.4, 'ol') + line(e, h, W.fa + 3.4, 'ol') + dot(h, W.hand + 1.7, 'olf');
     return o + line(s, e, W.ua, 'sk' + k) + line(s, mix(s, e, 0.42), W.sleeve, 'sh' + k) + line(e, h, W.fa, 'sk' + k) + dot(h, W.hand, 'skf' + k);
   }
   function leg(hp, kn, ft, toe, b, outline) {
     const k = b ? 'b' : '';
     let o = '';
-    if (outline) o += line(hp, kn, W.shorts + 3, 'ol') + line(kn, ft, W.sn + 3, 'ol') + line(ft, toe, W.shoe + 3, 'ol');
+    o += line(hp, kn, W.shorts + 3.4, 'ol') + line(kn, ft, W.sn + 3.4, 'ol') + line(ft, toe, W.shoe + 3, 'ol');
     return o + line(hp, kn, W.th, 'sk' + k) + line(hp, mix(hp, kn, 0.55), W.shorts, 'st' + k) + line(kn, ft, W.sn, 'sk' + k) + line(ft, toe, W.shoe, 'so' + k) + dot(ft, W.heel, 'sof' + k);
   }
   function head(j, front, top) {
@@ -225,7 +226,7 @@ const Fig = (() => {
     const v = unit(sub(j.head, j.sh));
     const f = [-v[1], v[0]];
     const neckA = j.sh, neckB = sub(c, mul(v, 6));
-    let o = line(neckA, neckB, W.neck, 'sk');
+    let o = line(neckA, neckB, W.neck + 3.4, 'ol') + line(neckA, neckB, W.neck, 'sk');
     if (top) {
       // Vista desde arriba: se ve la nuca
       o += dot(sub(c, mul(v, 0.8)), W.head - 0.5, 'skf') + dot(add(c, mul(v, 0.6)), W.head - 1.2, 'hairf');
