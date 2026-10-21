@@ -15,6 +15,8 @@
   --fig-back: #2b7448;
   --prop: #8b93a3;
   --prop-fill: #2a303c;
+  --skin: #e8b48f; --skin-b: #b07d5e; --shirt: #4ade80; --shirt-b: #23894c; --shorts: #64748b; --shorts-b: #3f4a5c;
+  --shoe: #eef1f5; --shoe-b: #a9b0bb; --hair: #6b4630; --eye: #2a1d16; --fig-line: #14171d; --mark: #fbbf24; --mark-ink: #1a1200;
   --radius: 16px;
   --tab-h: 64px;
   color-scheme: dark;
@@ -24,12 +26,16 @@
     --bg: #f4f6f8; --bg2: #eceff3; --card: #ffffff; --card2: #f0f2f5; --line: #dde1e7;
     --text: #12161c; --muted: #5b6575; --accent: #16a34a; --accent-ink: #ffffff; --accent2: #0891b2;
     --fig: #16a34a; --fig-back: #86cfa0; --prop: #6b7280; --prop-fill: #e5e7eb; color-scheme: light;
+    --skin: #e2a982; --skin-b: #c08a67; --shirt: #16a34a; --shirt-b: #6cc690; --shorts: #334155; --shorts-b: #7b8798;
+    --shoe: #1f2937; --shoe-b: #5b6472; --hair: #3a2a20; --eye: #2a1d16; --fig-line: #ffffff; --mark: #d97706; --mark-ink: #ffffff;
   }
 }
 :root[data-theme="light"] {
   --bg: #f4f6f8; --bg2: #eceff3; --card: #ffffff; --card2: #f0f2f5; --line: #dde1e7;
   --text: #12161c; --muted: #5b6575; --accent: #16a34a; --accent-ink: #ffffff; --accent2: #0891b2;
   --fig: #16a34a; --fig-back: #86cfa0; --prop: #6b7280; --prop-fill: #e5e7eb; color-scheme: light;
+  --skin: #e2a982; --skin-b: #c08a67; --shirt: #16a34a; --shirt-b: #6cc690; --shorts: #334155; --shorts-b: #7b8798;
+    --shoe: #1f2937; --shoe-b: #5b6472; --hair: #3a2a20; --eye: #2a1d16; --fig-line: #ffffff; --mark: #d97706; --mark-ink: #ffffff;
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -118,12 +124,23 @@ textarea { min-height: 80px; resize: vertical; }
 
 /* Figuras */
 .fig { display: block; width: 100%; overflow: hidden; }
-.fig .ff, .fig .ft, .fig .fb { fill: none; stroke-linecap: round; stroke-linejoin: round; }
-.fig .ff { stroke: var(--fig); stroke-width: 6; }
-.fig .ft { stroke: var(--fig); stroke-width: 7; }
-.fig .fb { stroke: var(--fig-back); stroke-width: 6; }
-.fig .fb.fb2 { stroke: var(--fig); }
-.fig .fh { fill: var(--fig); }
+.fig line { stroke-linecap: round; }
+.fig .sk { stroke: var(--skin); } .fig .skb { stroke: var(--skin-b); }
+.fig .skf { fill: var(--skin); } .fig .skfb { fill: var(--skin-b); }
+.fig .sh { stroke: var(--shirt); } .fig .shb { stroke: var(--shirt-b); }
+.fig .shf { fill: var(--shirt); stroke: var(--fig-line); stroke-width: 1.5; stroke-linejoin: round; }
+.fig .st { stroke: var(--shorts); } .fig .stb { stroke: var(--shorts-b); }
+.fig .stf { fill: var(--shorts); }
+.fig .so { stroke: var(--shoe); } .fig .sob { stroke: var(--shoe-b); }
+.fig .sof { fill: var(--shoe); } .fig .sofb { fill: var(--shoe-b); }
+.fig .ol { stroke: var(--fig-line); } .fig .olf { fill: var(--fig-line); }
+.fig .hairf { fill: var(--hair); }
+.fig .pbar-f { fill: var(--text); stroke: var(--fig-line); stroke-width: 1; }
+.fig .pring-f { fill: none; stroke: var(--text); stroke-width: 2.5; } .fig .eye { fill: var(--eye); }
+.fig .mk circle { fill: var(--mark); stroke: var(--fig-line); stroke-width: 1.2; }
+.fig .mk text { fill: var(--mark-ink); font: 800 8.5px system-ui, sans-serif; text-anchor: middle; dominant-baseline: central; }
+.fig .mk-ring { fill: none; stroke: var(--mark); stroke-width: 2; stroke-dasharray: 3 2; }
+.fig .mk-line { stroke: var(--mark); stroke-width: 2; stroke-dasharray: 5 3; }
 .fig .pf { stroke: var(--prop); stroke-width: 2; opacity: .6; }
 .fig .pw { stroke: var(--prop); stroke-width: 4; }
 .fig .pb { fill: var(--prop-fill); stroke: var(--prop); stroke-width: 1.5; }
@@ -234,7 +251,7 @@ textarea.mono { min-height: 200px; font: 12px/1.4 ui-monospace, SFMono-Regular, 
 .phase { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); margin-bottom: 4px; }
 .phase.rest { color: var(--accent2); }
 .wo-fig { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 10px; margin: 8px 0 14px; }
-.wo-fig .fig { height: 34vh; max-height: 260px; min-height: 160px; }
+.wo-fig .fig { height: 30vh; max-height: 250px; min-height: 150px; }
 .wo-name { font-size: 22px; font-weight: 750; margin: 0 0 4px; }
 .target { font-size: 17px; margin: 2px 0 8px; }
 .target b { color: var(--accent); }
@@ -271,3 +288,19 @@ textarea.mono { min-height: 200px; font: 12px/1.4 ui-monospace, SFMono-Regular, 
 .change { display: flex; gap: 10px; align-items: center; padding: 10px; border-radius: 12px; background: var(--card2); margin-bottom: 8px; font-size: 14px; }
 details summary { cursor: pointer; font-weight: 600; color: var(--muted); padding: 6px 0; }
 .pr { color: var(--warn); font-weight: 700; }
+ol.keys { list-style: none; padding: 0; margin: 0 0 12px; display: grid; gap: 8px; }
+ol.keys li { display: flex; gap: 10px; align-items: flex-start; }
+ol.keys .kb { flex: none; width: 22px; height: 22px; border-radius: 50%; background: var(--mark); color: var(--mark-ink); font-weight: 800; font-size: 12.5px; display: grid; place-items: center; margin-top: 1px; }
+.safe { background: color-mix(in srgb, var(--accent2) 10%, var(--card)); border: 1px solid color-mix(in srgb, var(--accent2) 35%, var(--line)); border-radius: 14px; padding: 12px 14px; margin: 0 0 14px; }
+.safe ul { margin: 6px 0 0; padding-left: 18px; font-size: 14px; }
+.safe li + li { margin-top: 4px; }
+.block-title { font-size: 13px; font-weight: 700; margin: 14px 4px 8px; }
+.flow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 4px 0 12px; }
+.flow span { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 8px; font-size: 12px; color: var(--muted); text-align: center; }
+.flow b { color: var(--text); font-size: 14px; }
+.inst ol { margin: 6px 0 12px; padding-left: 20px; font-size: 14px; }
+.inst li + li { margin-top: 4px; }
+code.url { background: var(--bg2); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; font-size: 13px; word-break: break-all; user-select: all; }
+.wo-keys { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px; margin-bottom: 10px; }
+.wo-keys ol.keys { margin: 0; gap: 6px; font-size: 14px; }
+.wo-safe { font-size: 13px; color: var(--muted); margin: 0 0 6px; }

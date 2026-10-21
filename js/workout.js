@@ -234,7 +234,8 @@ const Workout = (() => {
     const idx = W.steps.filter((s, j) => s.k === st.k && j <= W.i).length;
     return `${header(`${phase} ${idx}/${n}`)}<div class="wo-body">
       <div class="phase">${phase}</div><h2 class="wo-name">${esc(m.n)}</h2><p class="muted">${esc(m.desc)}</p>
-      ${m.fig && Fig.has(m.fig) ? `<div class="wo-fig">${Fig.svg(m.fig, { animate: true })}</div>` : ''}
+      ${m.fig && Fig.has(m.fig) ? `<div class="wo-fig">${Fig.svg(m.fig, { animate: true, marks: cueMarks(m.cues) })}</div>` : ''}
+      ${m.cues && m.cues.length ? `<div class="wo-keys">${App.keyList(m.cues)}</div>` : ''}
       ${ring(`<div><b id="t-num">${U.fmt(Math.ceil(left))}</b></div>`, left / W.timer.total, 'small work')}
       <div class="wo-actions">${timerControls()}</div></div>`;
   }
@@ -250,9 +251,10 @@ const Workout = (() => {
       <h2 class="wo-name">${esc(ex.n)}</h2>
       <div class="target">Objetivo: <b>${U.targetText(it, ex)}</b></div>
       ${setDots(it, st.s)}
-      <div class="wo-fig">${Fig.svg(ex.id, { animate: true })}</div>
-      ${lastTxt ? `<div class="lastline">Última vez: ${lastTxt}</div>` : '<div class="lastline">Primera vez: elige una cifra cómoda con buena técnica.</div>'}
-      <details><summary>Claves técnicas</summary><ul class="cues small">${ex.cues.map(c => `<li>${esc(c)}</li>`).join('')}</ul></details>`;
+      <div class="wo-fig">${Fig.svg(ex.id, { animate: true, marks: cueMarks(ex.cues) })}</div>
+      <div class="wo-keys">${App.keyList(ex.cues)}</div>
+      ${ex.safe && ex.safe[0] ? `<p class="wo-safe">🛡️ ${esc(ex.safe[0])}</p>` : ''}
+      ${lastTxt ? `<div class="lastline">Última vez: ${lastTxt}</div>` : '<div class="lastline">Primera vez: elige una cifra cómoda con buena técnica.</div>'}`;
     if (ex.type === 'time') {
       const t = W.timer;
       if (t && t.mode === 'prep') {
@@ -292,7 +294,7 @@ const Workout = (() => {
     const left = remaining();
     return `${header(`Finisher · ronda ${st.r + 1}/${f.rounds}`)}<div class="wo-body">
       <div class="phase">⚡ Finisher · ronda ${st.r + 1} de ${f.rounds}</div><h2 class="wo-name">${esc(ex.n)}</h2><p class="muted small">Máximas repeticiones con buena técnica</p>
-      <div class="wo-fig">${Fig.svg(ex.id, { animate: true })}</div>
+      <div class="wo-fig">${Fig.svg(ex.id, { animate: true, marks: cueMarks(ex.cues) })}</div>
       ${ring(`<div><b id="t-num">${U.fmt(Math.ceil(left))}</b></div>`, left / W.timer.total, 'small work')}
       <div class="wo-actions">${timerControls()}</div></div>`;
   }

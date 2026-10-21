@@ -125,7 +125,7 @@ const Planner = (() => {
     const wantsSkill = p.goal === 'habilidades' || (p.interests || []).includes('habilidades');
     const wantsCond = p.goal === 'perder_grasa' || p.goal === 'resistencia' || (p.interests || []).includes('cardio');
     const wantsMob = (p.interests || []).includes('movilidad') || p.age >= 40;
-    const plan = { createdAt: Date.now(), split: SPLIT_NAMES[n], levels: L, days: [] };
+    const plan = { createdAt: Date.now(), split: SPLIT_NAMES[n], levels: L, days: [], mobV: 2 };
 
     split.forEach((key, i) => {
       const tpl = DAY_TPL[key];
@@ -171,27 +171,43 @@ const Planner = (() => {
     return { ids: uniq.map(e => e.id), work: adv >= 5 ? 40 : 30, rest: adv >= 5 ? 15 : 20, rounds: adv <= 2 ? 2 : adv >= 5 ? 4 : 3 };
   }
 
+  // Calentamiento (5-7 min): general para subir pulsaciones y específico de las zonas del día
   function warmupFor(tpl, p) {
-    const upper = tpl.slots.some(s => /push|pull|dips/.test(s));
-    const lower = tpl.slots.some(s => /squat|hinge/.test(s));
-    const ids = [lowImpact(p) ? 'march' : 'jacks'];
-    if (upper) ids.push('wrists', 'arm_circles', 'scap');
-    ids.push('cat_cow');
-    if (lower) ids.push('leg_swings', 'deep_squat');
-    if (p.age >= 40 || (p.limits || []).length) ids.push(lower ? 'bridge_warm' : 'hip_circles');
+    const upper = tpl.slots.filter(s => /push|pull|dips/.test(s)).length;
+    const lower = tpl.slots.filter(s => /squat|hinge|calves/.test(s)).length;
+    const ids = [lowImpact(p) ? 'march' : 'jacks', 'cat_cow'];
+    if (upper) ids.push('arm_circles', 'wrists', 'scap');
+    if (lower) ids.push('hip_circles', 'leg_swings', 'deep_squat');
+    if (lower && (p.age >= 40 || (p.limits || []).length)) ids.push('bridge_warm');
     return [...new Set(ids)];
   }
+  // Estiramientos finales (4-6 min) de los músculos trabajados
   function cooldownFor(tpl, p, mob) {
-    const upper = tpl.slots.some(s => /push|pull|dips/.test(s));
-    const lower = tpl.slots.some(s => /squat|hinge/.test(s));
+    const upper = tpl.slots.filter(s => /push|pull|dips/.test(s)).length;
+    const lower = tpl.slots.filter(s => /squat|hinge|calves/.test(s)).length;
     const ids = [];
-    if (upper) ids.push('chest_stretch', (p.equipment || []).includes('bar') ? 'lat_hang' : 'child_pose');
-    if (lower) ids.push('quad', 'hamstring');
-    if (mob || tpl.mobility) ids.push('hinge_stretch', 'child_pose');
+    if (tpl.mobility) ids.push('cat_cow', 'deep_squat', 'leg_swings', 'arm_circles', 'hip_circles');
+    if (upper) ids.push('chest_stretch', 'shoulder_stretch', 'lat_hang');
+    if (lower) ids.push('quad', 'hip_flexor', 'hamstring', 'calf_stretch');
+    if (mob || tpl.mobility || !lower) ids.push('child_pose');
+    if (mob || tpl.mobility) ids.push('hinge_stretch');
     ids.push('breathing');
-    if (tpl.mobility) ids.unshift('cat_cow', 'deep_squat', 'leg_swings', 'arm_circles');
     return [...new Set(ids)];
   }
+  // Actualiza calentamiento y estiramientos de un plan guardado con una versión anterior
+  function refreshMobility(plan, p) {
+    if (!plan || plan.mobV === 2) return false;
+    const wantsMob = (p.interests || []).includes('movilidad') || p.age >= 40;
+    for (const d of plan.days) {
+      const tpl = DAY_TPL[d.key];
+      if (!tpl) continue;
+      d.warmup = warmupFor(tpl, p);
+      d.cooldown = cooldownFor(tpl, p, wantsMob);
+    }
+    plan.mobV = 2;
+    return true;
+  }
+  const mobMin = ids => Math.round(ids.reduce((a, id) => a + (MOBILITY[id]?.secs || 40), 0) / 60);
 
   function estimateMin(day) {
     let s = day.warmup.reduce((a, id) => a + (MOBILITY[id]?.secs || 40), 0);
@@ -371,5 +387,5 @@ const Planner = (() => {
     return R.sort((a, b) => a.prio - b.prio);
   }
 
-  return { DAYS, DAYS_S, GOALS, assess, generate, prescribe, family, allowed, hasEq, pick, estimateMin, entriesFor, setVal, applyProgress, swapExercise, recommendations, energy, bmi, bmiLabel, lowImpact, nextIn, DAY_TPL };
+  return { refreshMobility, mobMin, DAYS, DAYS_S, GOALS, assess, generate, prescribe, family, allowed, hasEq, pick, estimateMin, entriesFor, setVal, applyProgress, swapExercise, recommendations, energy, bmi, bmiLabel, lowImpact, nextIn, DAY_TPL };
 })();

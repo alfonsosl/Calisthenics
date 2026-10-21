@@ -372,4 +372,47 @@
     return { frames: [q], props: [floor] };
   })());
   def('chest_stretch', { frames: [S({ ua2: -90, fa2: -90, ua: -60, fa: -60 }), S({ ua2: -100, fa2: -100, ua: -75, fa: -75, t: 176 })], props: [floor], dur: 3600 });
+  /* ---- Calentamiento y estiramientos adicionales ---- */
+  def('wrist_rock', (() => {
+    const a = { t: 106, n: 110, ua: 0, fa: 0, th: 0, sn: -90, fd: -100, an: ['kn', 0, -2] };
+    const h = J(a).ha;
+    const ikk = { ha: [h[0], h[1], 1] };
+    return { frames: [{ ...a, t: 112, ik: ikk }, { ...a, t: 98, n: 102, ik: ikk }], props: [floor], dur: 2600 };
+  })());
+  def('scap_pushup', (() => {
+    const pf = pushup().frames[0];
+    return { frames: [pf, { ...pf, t: pf.t - 3, n: pf.n == null ? pf.t - 3 : pf.n - 3 }], props: [floor], dur: 2000 };
+  })());
+  def('hip_circles', {
+    frames: [
+      { view: 'front', t: 174, ua: 40, fa: -50, ua2: -40, fa2: 50, th: 8, sn: 2, th2: -2, sn2: -6, an: ['hip', 4, -68] },
+      { view: 'front', t: 186, ua: 40, fa: -50, ua2: -40, fa2: 50, th: 2, sn: 6, th2: -8, sn2: -2, an: ['hip', -4, -68] },
+    ], props: [floor], dur: 2400,
+  });
+  def('lat_stretch', (() => {
+    const mk = t => ({ t, n: t + 4, ua: t, fa: t, th: -12, sn: 2, fd: 90, an: ['ft', 0, 0] });
+    const h = J(mk(96)).ha;
+    return { frames: [{ ...mk(100), ik: { ha: [h[0], h[1], -1] } }, { ...mk(92), ik: { ha: [h[0], h[1], -1] } }], props: [floor, { k: 'chair', x: h[0] - 6, y: h[1] + 4, w: 34, back: 1 }], dur: 3600 };
+  })());
+  def('breathing', (() => {
+    const base = { t: -90, n: -94, ua: 140, fa: 60, th: 140, sn: 14, fd: 90, an: ['sh', 0, -5] };
+    const ft = J(base).ft;
+    return { frames: [{ ...base, ik: { ft: [ft[0], ft[1], -1] } }], props: [floor] };
+  })());
+  def('hip_flexor', (() => {
+    const a = { t: 180, ua: 4, fa: 6, th: 84, sn: 0, fd: 90, th2: -20, sn2: -92, fd2: -100, an: ['kn2', 0, -3] };
+    const f = J(a).ft;
+    const ikk = { ft: [f[0], f[1], -1] };
+    return { frames: [{ ...a, ik: ikk }, { ...a, t: 176, th2: -38, ik: ikk }], props: [floor], dur: 3600 };
+  })());
+  def('calf_stretch', (() => {
+    const a = { t: 158, n: 162, ua: 100, fa: 100, th: 28, sn: -6, fd: 90, th2: -24, sn2: -24, fd2: 66, an: ['ft2', 0, 0] };
+    const j = J(a);
+    const W = j.sh[0] + 46;
+    return { frames: [{ ...a, ik: { ha: [W, j.sh[1] - 4, 1] } }], props: [floor, { k: 'wall', x: W + 2, y2: -160 }] };
+  })());
+  def('shoulder_stretch', {
+    frames: [{ view: 'front', t: 180, ua: -80, fa: -95, ua2: -30, fa2: 70, th: 6, sn: 6, th2: -6, sn2: -6, an: ['hip', 0, -70] }],
+    props: [floor],
+  });
 })();

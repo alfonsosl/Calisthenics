@@ -1,8 +1,8 @@
 /* Service worker: la app funciona sin conexión tras la primera visita */
-const CACHE = 'calistenia-v1';
+const CACHE = 'calistenia-v2';
 const ASSETS = [
   './', './index.html', './manifest.webmanifest', './css/styles.css',
-  './js/figures.js', './js/poses.js', './js/exercises.js', './js/planner.js', './js/app.js', './js/workout.js',
+  './js/figures.js', './js/poses.js', './js/exercises.js', './js/keys.js', './js/planner.js', './js/app.js', './js/workout.js',
   './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png',
 ];
 self.addEventListener('install', e => {

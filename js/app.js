@@ -36,6 +36,52 @@ const App = (() => {
   let obStep = 0;
   const ui = { libFam: 'all', libLvl: 'all', libMine: true, progEx: null, openDay: null, sheet: null };
 
+  /* ---------------- Bloques reutilizables ---------------- */
+  // Lista numerada de puntos clave; los números coinciden con las marcas de la figura
+  function keyList(cues) {
+    return `<ol class="keys">${(cues || []).map((c, i) => `<li><span class="kb">${c[0] ? i + 1 : '•'}</span><span>${esc(c[1])}</span></li>`).join('')}</ol>`;
+  }
+  function safeList(items) {
+    return items && items.length ? `<div class="safe"><b>🛡️ Para no lesionarte</b><ul>${items.map(t => `<li>${esc(t)}</li>`).join('')}</ul></div>` : '';
+  }
+  function mobRow(id, kind) {
+    const m = MOBILITY[id];
+    return `<button class="li" data-act="mob" data-id="${id}"><div class="thumb">${Fig.svg(m.fig)}</div><div class="grow"><b>${esc(m.n)}</b><div class="meta">${m.secs} s · ${kind}</div></div><span class="chev">›</span></button>`;
+  }
+  function mobSheet(id) {
+    const m = MOBILITY[id];
+    openSheet(`<div class="sheet-head"><div><h2 style="margin-bottom:4px">${esc(m.n)}</h2><span class="badge">${m.secs} segundos</span></div><button class="icon-btn" data-act="close">✕</button></div>
+      <div class="fig-hero">${Fig.svg(m.fig, { animate: true, marks: cueMarks(m.cues) })}</div>
+      <p>${esc(m.desc)}</p>
+      ${m.cues.length ? `<h4>Cómo hacerlo bien</h4>${keyList(m.cues)}` : ''}
+      <p class="small muted">Sin rebotes ni dolor: el estiramiento debe notarse como una tensión agradable.</p>`, 'mob');
+  }
+
+  /* ---------------- Instalación ---------------- */
+  const APP_URL = 'https://alfonsosl.github.io/Calisthenics/';
+  let installEvt = null;
+  window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; if (view === 'profile' && !ob) render(); });
+  function installCard() {
+    let inFrame = false;
+    try { inFrame = window.self !== window.top; } catch (e) { inFrame = true; }
+    const standalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone;
+    if (standalone) return '<div class="card"><h3>✅ App instalada</h3><p class="small muted" style="margin:0">Ya la estás usando como aplicación. Ábrela desde su icono.</p></div>';
+    const ios = /iPhone|iPad|iPod/.test(navigator.userAgent);
+    const android = /Android/.test(navigator.userAgent);
+    const steps = {
+      android: ['Abre la dirección de la app en <b>Chrome</b>.', 'Toca el menú <b>⋮</b> (arriba a la derecha).', 'Elige <b>Instalar aplicación</b> o <b>Añadir a pantalla de inicio</b>.', 'Confirma. El icono aparece con el resto de tus apps.'],
+      ios: ['Abre la dirección de la app en <b>Safari</b> (no desde otra app).', 'Toca <b>Compartir</b> (el cuadrado con la flecha hacia arriba).', 'Baja y elige <b>Añadir a pantalla de inicio</b>.', 'Toca <b>Añadir</b>. El icono aparece en tu pantalla.'],
+    };
+    const block = (k, t) => `<div class="inst"><b>${t}</b><ol>${steps[k].map(s => `<li>${s}</li>`).join('')}</ol></div>`;
+    return `<div class="card" id="install"><h3>📲 Instalar en el móvil</h3>
+      <p class="small muted">Instalada funciona como una app normal: icono propio, pantalla completa y sin conexión.</p>
+      ${installEvt ? '<button class="btn primary block" data-act="install" style="margin-bottom:12px">Instalar ahora</button>' : ''}
+      ${inFrame ? `<p class="small">Ahora la estás viendo como vista previa dentro de Claude, y desde aquí no se puede instalar. Abre la dirección propia de la app:</p><div class="row" style="margin-bottom:12px"><code class="url grow">${APP_URL}</code><button class="btn sm" data-act="copy-url">Copiar</button></div>` : ''}
+      ${ios ? block('ios', 'iPhone / iPad') : android ? block('android', 'Android') : block('android', 'Android') + block('ios', 'iPhone / iPad')}
+      ${ios || android ? `<details><summary>${ios ? 'Instrucciones para Android' : 'Instrucciones para iPhone'}</summary>${ios ? block('android', 'Android') : block('ios', 'iPhone / iPad')}</details>` : ''}
+    </div>`;
+  }
+
   /* ---------------- Render principal ---------------- */
   function render() {
     const st = S();
@@ -278,7 +324,8 @@ const App = (() => {
       hero = `<div class="card hero"><div class="phase">Hoy</div><h2>✓ Sesión completada</h2><p class="muted">${esc(doneToday.dayName)} · ${U.fmt(doneToday.duration)} · ${doneToday.entries.reduce((a, e) => a + e.sets.filter(x => x.done).length, 0)} series</p><p class="small">Descansa, come bien y duerme. Mañana más.</p></div>`;
     } else if (di >= 0) {
       const d = plan.days[di];
-      hero = `<div class="card hero"><div class="phase">Hoy toca</div><h2>${esc(d.name)}</h2><p class="muted small">${d.items.length} ejercicios · ~${Planner.estimateMin(d)} min${d.finisher ? ' · con finisher' : ''}</p>
+      hero = `<div class="card hero"><div class="phase">Hoy toca</div><h2>${esc(d.name)}</h2><p class="muted small">~${Planner.estimateMin(d)} min en total</p>
+        <div class="flow"><span>🔥 Calentamiento<br><b>${Planner.mobMin(d.warmup)} min</b></span><span>💪 ${d.items.length} ejercicios${d.finisher ? ' + finisher' : ''}<br><b>${Math.max(1, Planner.estimateMin(d) - Planner.mobMin(d.warmup) - Planner.mobMin(d.cooldown))} min</b></span><span>🧘 Estiramientos<br><b>${Planner.mobMin(d.cooldown)} min</b></span></div>
         <div class="row wrap" style="gap:6px;margin-bottom:12px">${d.items.map(it => `<span class="badge">${esc(EX[it.exId].n)}</span>`).join('')}</div>
         <button class="btn primary lg block" data-act="start" data-d="${di}">▶ Empezar entrenamiento</button></div>`;
     } else {
@@ -292,6 +339,7 @@ const App = (() => {
       <div class="top"><div><div class="small muted">${new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</div><h1>${hello}${p.name ? ', ' + esc(p.name) : ''}</h1></div></div>
       ${hero}
       <div class="card tight">${weekStrip()}</div>
+      ${!S().settings.hideInstall && !((window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone) ? '<div class="card tight row"><span style="font-size:24px">📲</span><div class="grow small"><b>Instálala en tu móvil</b><div class="muted">Icono propio y uso sin conexión.</div></div><button class="btn sm primary" data-act="go-install">Cómo</button><button class="icon-btn" data-act="hide-install" aria-label="Ocultar">✕</button></div>' : ''}
       <div class="stats"><div class="stat"><b>${s.week}/${plan.days.length}</b><span>Esta semana</span></div><div class="stat"><b>${s.streak}</b><span>Semanas seguidas</span></div><div class="stat"><b>${s.total}</b><span>Sesiones</span></div></div>
       ${lastChanges.length ? `<div class="card"><h3>Progresión sugerida</h3>${lastChanges.map(changeHtml).join('')}<button class="btn primary block sm" data-act="apply-changes">Aplicar cambios</button></div>` : ''}
       <div class="section-title row between"><span>Recomendaciones para ti</span><button class="link small" data-act="all-recos">Ver todas</button></div>
@@ -347,10 +395,13 @@ const App = (() => {
           <button class="row between" style="width:100%;background:none;border:0;padding:4px;cursor:pointer;text-align:left" data-act="toggle-day" data-d="${i}">
             <div><div class="small muted">${Planner.DAYS[d.weekday]}</div><h3 style="margin:0">${esc(d.name)}</h3><div class="small muted">${d.items.length} ejercicios · ~${Planner.estimateMin(d)} min</div></div><span class="muted">${open ? '▲' : '▼'}</span></button>
           ${open ? `
-            <details style="margin:8px 4px"><summary>🔥 Calentamiento (${d.warmup.length})</summary><div class="small muted">${d.warmup.map(id => MOBILITY[id].n).join(' · ')}</div></details>
-            <div class="list" style="margin:6px 0">${d.items.map((it, ii) => itemRow(it, i, ii)).join('')}</div>
+            <div class="block-title">1 · Calentamiento <span class="muted">~${Planner.mobMin(d.warmup)} min</span></div>
+            <div class="list">${d.warmup.map(id => mobRow(id, 'calentamiento')).join('')}</div>
+            <div class="block-title">2 · Entrenamiento</div>
+            <div class="list">${d.items.map((it, ii) => itemRow(it, i, ii)).join('')}</div>
             ${d.finisher ? `<div class="card tight" style="background:var(--bg2);margin:8px 0"><b>⚡ Finisher</b> <span class="small muted">${d.finisher.rounds} rondas · ${d.finisher.work}s trabajo / ${d.finisher.rest}s descanso</span><div class="small">${d.finisher.ids.map(id => EX[id].n).join(' → ')}</div></div>` : ''}
-            <details style="margin:4px"><summary>🧘 Vuelta a la calma (${d.cooldown.length})</summary><div class="small muted">${d.cooldown.map(id => MOBILITY[id].n).join(' · ')}</div></details>
+            <div class="block-title">3 · Estiramientos <span class="muted">~${Planner.mobMin(d.cooldown)} min</span></div>
+            <div class="list">${d.cooldown.map(id => mobRow(id, 'estiramiento')).join('')}</div>
             <button class="btn primary block" style="margin-top:10px" data-act="start" data-d="${i}">▶ Empezar esta sesión</button>` : ''}
         </div>`;
       }).join('')}
@@ -372,11 +423,12 @@ const App = (() => {
     const item = ctx ? st.plan.days[ctx.di].items[ctx.ii] : null;
     const html = `
       <div class="sheet-head"><div><h2 style="margin-bottom:4px">${esc(ex.n)}</h2><span class="badge ${U.lvlCls(ex.lvl)}">Nivel ${ex.lvl} · ${LEVEL_NAMES(ex.lvl)}</span> <span class="badge">${FAMILIES[ex.fam].name}</span></div><button class="icon-btn" data-act="close">✕</button></div>
-      <div class="fig-hero">${Fig.svg(id, { animate: true })}</div>
+      <div class="fig-hero">${Fig.svg(id, { animate: true, marks: cueMarks(ex.cues) })}<div class="tiny muted center">Los números señalan los puntos clave de la lista</div></div>
       ${item && item.exId === id ? `<div class="card tight row between"><span><b>${item.sets} × ${U.targetText(item, ex)}</b></span><span class="muted small">Descanso ${item.rest}s</span></div>` : ''}
       <p>${esc(ex.desc)}</p>
       <p class="small"><b>Músculos:</b> <span class="muted">${esc(ex.musc)}</span><br><b>Material:</b> <span class="muted">${esc(eqNames)}</span></p>
-      <h4>Claves técnicas</h4><ul class="cues">${ex.cues.map(c => `<li>${esc(c)}</li>`).join('')}</ul>
+      <h4>Postura correcta</h4>${keyList(ex.cues)}
+      ${safeList(ex.safe)}
       <h4>Errores comunes</h4><ul class="cues bad">${ex.err.map(c => `<li>${esc(c)}</li>`).join('')}</ul>
       ${hist.length ? `<h4>Tu historial</h4><div class="card tight">${lineChart(hist.slice(-12).map(e => ({ l: new Date(e.date).getDate() + '/' + (new Date(e.date).getMonth() + 1), y: Math.max(...e.sets.filter(x => x.done).map(Planner.setVal)), y2: e.sets.reduce((a, x) => a + (x.done ? Planner.setVal(x) : 0), 0) })))}<div class="legend"><span><i></i>Mejor serie</span><span><i class="b"></i>Total</span></div><p class="small" style="margin:8px 0 0">Récord: <b class="pr">${best} ${ex.type === 'time' ? 's' : 'reps'}</b> · ${hist.length} sesiones</p></div>` : ''}
       <h4>Progresión (${FAMILIES[ex.fam].name})</h4>
@@ -504,6 +556,8 @@ const App = (() => {
       ${tog('vibrate', 'Vibración', 'Al terminar descansos e intervalos')}
       <label class="field"><span>Cuenta atrás antes de ejercicios por tiempo</span><select data-act="prep">${[3, 5, 10].map(v => `<option value="${v}" ${set.prep === v ? 'selected' : ''}>${v} segundos</option>`).join('')}</select></label>
       <label class="field"><span>Tema</span><select data-act="theme">${[['auto', 'Automático'], ['dark', 'Oscuro'], ['light', 'Claro']].map(([v, l]) => `<option value="${v}" ${set.theme === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+      <div class="section-title">Instalación</div>
+      ${installCard()}
       <div class="section-title">Datos</div>
       <div class="row" style="margin-bottom:10px"><button class="btn ghost grow" data-act="export">⬇️ Exportar copia</button><label class="btn ghost grow" style="cursor:pointer">⬆️ Importar<input type="file" accept="application/json" id="importFile" hidden></label></div>
       <button class="btn danger block" data-act="reset">Borrar todos los datos</button>
@@ -527,6 +581,11 @@ const App = (() => {
 
   const actions = {
     tab: el => go(el.dataset.v),
+    mob: el => mobSheet(el.dataset.id),
+    install: async () => { if (!installEvt) return; installEvt.prompt(); try { await installEvt.userChoice; } catch (e) { /* noop */ } installEvt = null; render(); },
+    'copy-url': () => { try { navigator.clipboard.writeText(APP_URL).then(() => toast('Dirección copiada'), () => toast('Mantén pulsada la dirección para copiarla')); } catch (e) { toast('Mantén pulsada la dirección para copiarla'); } },
+    'go-install': () => { go('profile'); setTimeout(() => { const el = document.getElementById('install'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }, 50); },
+    'hide-install': () => { S().settings.hideInstall = true; Store.save(); render(); },
     close: () => closeSheet(),
     'ob-next': () => { if (obStep < OB_STEPS.length - 1) { obStep++; window.scrollTo(0, 0); render(); } },
     'ob-back': () => { if (obStep > 0) { obStep--; render(); } },
@@ -669,11 +728,12 @@ const App = (() => {
   function init() {
     applyTheme();
     bind();
+    if (S().plan && S().profile && Planner.refreshMobility(S().plan, S().profile)) Store.save();
     const h = location.hash.slice(1);
     if (['home', 'plan', 'progress', 'library', 'profile'].includes(h)) view = h;
     render();
     if (S().active && S().profile) setTimeout(() => toast('Tienes un entrenamiento a medias'), 400);
   }
 
-  return { init, render, go, toast, ask, openSheet, closeSheet, exerciseSheet, changeHtml };
+  return { init, render, go, toast, ask, openSheet, closeSheet, exerciseSheet, changeHtml, keyList, safeList };
 })();
