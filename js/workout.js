@@ -64,9 +64,9 @@ const Workout = (() => {
     return steps;
   }
 
-  function start(dayIndex) {
+  async function start(dayIndex) {
     const st = S();
-    if (st.active && !confirm('Ya tienes una sesión a medias. ¿Empezar una nueva y descartarla?')) { resume(); return; }
+    if (st.active && !(await App.ask('Ya tienes una sesión a medias. ¿Empezar una nueva y descartar la anterior?', 'Empezar nueva', true))) { resume(); return; }
     const day = st.plan.days[dayIndex];
     W = { dayIndex, day: JSON.parse(JSON.stringify(day)), steps: buildSteps(day), i: 0, startedAt: Date.now(), results: {}, timer: null, finDone: false, feeling: 0, notes: '', inputs: {} };
     st.active = W; Store.save();
@@ -372,8 +372,8 @@ const Workout = (() => {
     exit: () => exitSheet(),
     'finish-now': () => { App.closeSheet(true); W.i = W.steps.length - 1; enterStep(); },
     later: () => { App.closeSheet(true); save(); close(); },
-    discard: () => {
-      if (!confirm('¿Descartar esta sesión? No se guardará nada.')) return;
+    discard: async () => {
+      if (!(await App.ask('¿Descartar esta sesión? No se guardará nada.', 'Descartar', true))) return;
       App.closeSheet(true);
       S().active = null; Store.save(); close();
     },
@@ -395,12 +395,12 @@ const Workout = (() => {
     'cancel-hold': () => { W.timer = null; save(); render(); },
     'stop-hold': () => { const secs = (Date.now() - W.timer.start) / 1000; beep(880, 150); logSet(secs); },
     feel: el => { W.feeling = +el.dataset.v; const ta = document.getElementById('wo-notes'); if (ta) W.notes = ta.value; save(); render(); },
-    save: () => {
+    save: async () => {
       const ta = document.getElementById('wo-notes');
       if (ta) W.notes = ta.value;
       const st = S();
       const ses = buildSession();
-      if (!ses.entries.some(e => e.sets.some(x => x.done)) && !confirm('No has registrado ninguna serie. ¿Guardar igualmente?')) return;
+      if (!ses.entries.some(e => e.sets.some(x => x.done)) && !(await App.ask('No has registrado ninguna serie. ¿Guardar igualmente?', 'Guardar'))) return;
       st.sessions.push(ses);
       ses.changes = Planner.applyProgress(st.plan, ses, st.profile, st.sessions, st.settings.auto);
       st.active = null;

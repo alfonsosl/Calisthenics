@@ -68,6 +68,22 @@ const App = (() => {
     setTimeout(() => t.remove(), 2600);
   }
 
+  /* ---------------- Confirmación (sustituye a confirm(), que algunos visores bloquean) ---------------- */
+  function ask(msg, ok = 'Aceptar', danger = false) {
+    return new Promise(res => {
+      const w = document.createElement('div');
+      w.className = 'sheet-wrap ask-wrap';
+      w.innerHTML = `<div class="sheet" role="alertdialog" aria-modal="true"><div class="grab"></div><p class="ask-msg">${esc(msg)}</p><div class="stack"><button class="btn ${danger ? 'danger' : 'primary'} block" data-ask="1">${esc(ok)}</button><button class="btn ghost block" data-ask="0">Cancelar</button></div></div>`;
+      const done = v => { w.remove(); res(v); };
+      w.addEventListener('click', e => {
+        const b = e.target.closest('[data-ask]');
+        if (b) { e.stopPropagation(); done(b.dataset.ask === '1'); } else if (e.target === w) done(false);
+      });
+      document.body.appendChild(w);
+      w.querySelector('[data-ask="1"]').focus();
+    });
+  }
+
   /* ---------------- Hoja modal ---------------- */
   function openSheet(html, key) {
     closeSheet(true);
@@ -494,9 +510,11 @@ const App = (() => {
       <p class="tiny muted center" style="margin-top:20px">Tus datos se guardan solo en este dispositivo. Haz una copia de seguridad de vez en cuando.<br>Esta app no sustituye el consejo médico.</p>`;
   }
 
+  let themeSet = false;
   function applyTheme() {
     const t = S().settings.theme;
-    if (t === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.dataset.theme = t;
+    // En 'auto' no se toca el atributo para respetar el tema del sistema o del visor
+    if (t === 'auto') { if (themeSet) document.documentElement.removeAttribute('data-theme'); themeSet = false; } else { document.documentElement.dataset.theme = t; themeSet = true; }
   }
 
   /* ================= EVENTOS ================= */
@@ -513,8 +531,8 @@ const App = (() => {
     'ob-next': () => { if (obStep < OB_STEPS.length - 1) { obStep++; window.scrollTo(0, 0); render(); } },
     'ob-back': () => { if (obStep > 0) { obStep--; render(); } },
     'ob-cancel': () => { ob = null; render(); },
-    'ob-finish': () => {
-      if (S().profile && S().sessions.length && !confirm('Se regenerará la rutina con tus nuevos datos. Tu historial se conserva. ¿Continuar?')) return;
+    'ob-finish': async () => {
+      if (S().profile && S().sessions.length && !(await ask('Se regenerará la rutina con tus nuevos datos. Tu historial se conserva.', 'Regenerar rutina'))) return;
       finishOnboarding();
     },
     'ob-set': el => { const v = el.dataset.num ? +el.dataset.v : el.dataset.v; ob[el.dataset.k] = v; render(); },
@@ -527,7 +545,7 @@ const App = (() => {
     },
     start: el => { closeSheet(true); Workout.start(+el.dataset.d); },
     resume: () => Workout.resume(),
-    'discard-active': () => { if (confirm('¿Descartar la sesión en curso?')) { S().active = null; Store.save(); render(); } },
+    'discard-active': async () => { if (await ask('¿Descartar la sesión en curso? Se perderá lo registrado.', 'Descartar', true)) { S().active = null; Store.save(); render(); } },
     'pick-day': pickDay,
     'all-recos': allRecos,
     'apply-changes': () => {
@@ -554,16 +572,16 @@ const App = (() => {
       render();
       toast('Variante cambiada');
     },
-    regen: () => {
-      if (!confirm('Se creará una rutina nueva a partir de tu perfil y los niveles actuales. Los cambios manuales de variantes se perderán. ¿Continuar?')) return;
+    regen: async () => {
+      if (!(await ask('Se creará una rutina nueva a partir de tu perfil y tus niveles actuales. Los cambios manuales de variantes se perderán.', 'Regenerar rutina'))) return;
       const st = S();
       st.plan = Planner.generate(st.profile);
       Store.save(); render(); toast('Rutina regenerada');
     },
     'edit-profile': el => { startOnboarding(+el.dataset.step || 1); render(); window.scrollTo(0, 0); },
     session: el => sessionSheet(el.dataset.id),
-    'del-session': el => {
-      if (!confirm('¿Eliminar esta sesión del historial?')) return;
+    'del-session': async el => {
+      if (!(await ask('¿Eliminar esta sesión del historial?', 'Eliminar', true))) return;
       const st = S();
       st.sessions = st.sessions.filter(s => s.id !== el.dataset.id);
       Store.save(); closeSheet(); render();
@@ -580,6 +598,18 @@ const App = (() => {
     'lib-mine': () => { ui.libMine = !ui.libMine; render(); },
     setting: el => { const st = S(); st.settings[el.dataset.k] = !st.settings[el.dataset.k]; Store.save(); render(); },
     export: () => {
+      const json = JSON.stringify(S(), null, 2);
+      openSheet(`<div class="sheet-head"><h2>Copia de seguridad</h2><button class="icon-btn" data-act="close">✕</button></div>
+        <p class="small muted">Guarda este texto en un archivo .json o en tus notas. Para restaurarlo, usa «Importar» en el perfil.</p>
+        <textarea id="exportTxt" readonly class="mono">${esc(json)}</textarea>
+        <div class="row" style="margin-top:10px"><button class="btn primary grow" data-act="copy-export">Copiar</button><button class="btn ghost grow" data-act="download-export">Descargar .json</button></div>`);
+    },
+    'copy-export': () => {
+      const ta = $('#exportTxt');
+      const fallback = () => { ta.focus(); ta.select(); try { document.execCommand('copy'); toast('Copiado'); } catch (e) { toast('Selecciona el texto y cópialo'); } };
+      try { navigator.clipboard.writeText(ta.value).then(() => toast('Copiado'), fallback); } catch (e) { fallback(); }
+    },
+    'download-export': () => {
       const blob = new Blob([JSON.stringify(S(), null, 2)], { type: 'application/json' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
@@ -587,8 +617,8 @@ const App = (() => {
       document.body.appendChild(a); a.click(); a.remove();
       setTimeout(() => URL.revokeObjectURL(a.href), 2000);
     },
-    reset: () => {
-      if (!confirm('Se borrarán perfil, rutina e historial de este dispositivo. ¿Seguro?')) return;
+    reset: async () => {
+      if (!(await ask('Se borrarán perfil, rutina e historial de este dispositivo. No se puede deshacer.', 'Borrar todo', true))) return;
       Store.reset(); ob = null; view = 'home'; render();
     },
   };
@@ -645,5 +675,5 @@ const App = (() => {
     if (S().active && S().profile) setTimeout(() => toast('Tienes un entrenamiento a medias'), 400);
   }
 
-  return { init, render, go, toast, openSheet, closeSheet, exerciseSheet, changeHtml };
+  return { init, render, go, toast, ask, openSheet, closeSheet, exerciseSheet, changeHtml };
 })();
