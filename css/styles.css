@@ -2,7 +2,6 @@
  * Diseño inspirado en un cartel de cafetería ilustrado:
  * papel crema + un único azul cobalto, ilustración de línea, titulares condensados
  * muy gruesos, notas a mano y componentes con contorno fino y esquinas de píldora.
- * Tema oscuro = «póster azul»: fondo cobalto con líneas y texto crema.
  */
 :root {
   --bg: #f6eedf; --bg2: #efe4d0; --card: #fbf6ec; --card2: #f1e7d5;
@@ -20,25 +19,6 @@
   --r: 26px; --tab-h: 74px;
   color-scheme: light;
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #12309c; --bg2: #0f2a8b; --card: #1739ad; --card2: #1d40b9;
-    --ink: #f6eedf; --ink-2: #ffffff; --on-ink: #12309c;
-    --text: #f6eedf; --muted: #c6cff0; --line-soft: #3654c4;
-    --mark: #ff8a5c; --mark-ink: #2a0d02; --danger: #ff6b4f; --danger-ink: #2a0802; --warn: #ffc56b;
-    --skin-b: #2a4cc0; --shirt-b: #2a4cc0; --shorts-b: #b9c4ee; --shoe-b: #b9c4ee;
-    color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #12309c; --bg2: #0f2a8b; --card: #1739ad; --card2: #1d40b9;
-  --ink: #f6eedf; --ink-2: #ffffff; --on-ink: #12309c;
-  --text: #f6eedf; --muted: #c6cff0; --line-soft: #3654c4;
-  --mark: #ff8a5c; --mark-ink: #2a0d02; --danger: #ff6b4f; --danger-ink: #2a0802; --warn: #ffc56b;
-  --skin-b: #2a4cc0; --shirt-b: #2a4cc0; --shorts-b: #b9c4ee; --shoe-b: #b9c4ee;
-  color-scheme: dark;
-}
-
 /* ---------- Base ---------- */
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; padding: 0; }
@@ -351,3 +331,27 @@ code.url { border: 1.5px dashed var(--ink); border-radius: 14px; padding: 8px 10
 .mu-b.main { background: var(--ink); color: var(--on-ink); }
 
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+/* ---------- Ayudas de uso ---------- */
+.hscroll { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-left: -18px; margin-right: -18px; padding: 2px 18px 4px; }
+.hscroll::-webkit-scrollbar { display: none; }
+.hscroll .chip { flex: none; }
+.search { position: relative; margin-bottom: 12px; }
+.search input { padding-left: 44px; border-color: var(--ink); border-radius: 999px; }
+.search svg { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); width: 20px; height: 20px; fill: none; stroke: var(--ink); stroke-width: 2; stroke-linecap: round; }
+.result-count { font-size: 13.5px; color: var(--muted); margin: 0 4px 10px; }
+.hint { font-family: var(--f-hand); font-size: 18px; color: var(--ink); text-align: center; margin: 0; line-height: 1.2; }
+details.fold { border: 1.5px solid var(--ink); border-radius: var(--r); background: var(--card); margin: 12px 0; }
+details.fold > summary { list-style: none; display: flex; align-items: center; gap: 10px; padding: 14px 16px; }
+details.fold > summary::-webkit-details-marker { display: none; }
+details.fold > summary::after { content: "Ver"; margin-left: auto; font-size: 13px; font-weight: 700; border: 1.5px solid var(--ink); border-radius: 999px; padding: 3px 12px; }
+details.fold[open] > summary::after { content: "Ocultar"; }
+details.fold .fold-t { font-family: var(--f-display); font-stretch: 75%; font-size: 19px; font-weight: 800; color: var(--ink); }
+details.fold .muted { font-size: 13.5px; font-weight: 500; }
+details.fold .list { padding: 0 10px 10px; }
+.howto { border-style: dashed; }
+.howto ol { margin: 4px 0 0; padding: 0; list-style: none; counter-reset: h; display: grid; gap: 10px; }
+.howto li { counter-increment: h; display: grid; grid-template-columns: 30px 1fr; gap: 10px; font-size: 14.5px; }
+.howto li::before { content: counter(h); width: 30px; height: 30px; border-radius: 50%; background: var(--ink); color: var(--on-ink); display: grid; place-items: center; font-weight: 800; }
+.howto li b { color: var(--ink); }
+.ctrl-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }

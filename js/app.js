@@ -333,7 +333,6 @@ const App = (() => {
       hero = `<div class="card hero"><div class="phase">Hoy toca</div><h2>${esc(d.name)}</h2><p class="muted small">~${Planner.estimateMin(d)} min en total</p>
         <div class="hero-fig">${Fig.svg(d.items[0].exId, { animate: true })}</div>
         <div class="flow"><span>Calentamiento<br><b>${Planner.mobMin(d.warmup)} min</b></span><span>${d.items.length} ejercicios${d.finisher ? ' + finisher' : ''}<br><b>${Math.max(1, Planner.estimateMin(d) - Planner.mobMin(d.warmup) - Planner.mobMin(d.cooldown))} min</b></span><span>Estiramientos<br><b>${Planner.mobMin(d.cooldown)} min</b></span></div>
-        <div class="row wrap" style="gap:6px;margin-bottom:12px">${d.items.map(it => `<span class="badge">${esc(EX[it.exId].n)}</span>`).join('')}</div>
         <button class="btn primary lg block" data-act="start" data-d="${di}">▶ Empezar entrenamiento</button>${window.Music ? Music.heroLink() : ''}</div>`;
     } else {
       const next = plan.days.slice().sort((a, b) => ((a.weekday - today + 7) % 7) - ((b.weekday - today + 7) % 7))[0];
@@ -345,6 +344,10 @@ const App = (() => {
     return `
       <div class="top"><div><div class="small muted">${new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</div><h1>${p.name ? 'Hola, ' + esc(p.name) : hello}</h1><p class="hand" style="margin:4px 0 0">Ven por el sudor, quédate por el progreso.</p></div></div>
       ${hero}
+      ${S().settings.hideHowto ? '' : `<div class="card howto"><div class="row between"><h3 style="margin:0">Cómo funciona</h3><button class="icon-btn" data-act="hide-howto" aria-label="Cerrar la ayuda">✕</button></div>
+        <ol><li><span><b>Pulsa «Empezar entrenamiento».</b> La sesión te guía paso a paso: calentamiento, ejercicios y estiramientos.</span></li>
+        <li><span><b>Cada ejercicio espera a que pulses ▶ Empezar.</b> Al terminar una serie, anota cuántas has hecho.</span></li>
+        <li><span><b>¿Algo no va bien? Pulsa ✋ Parar.</b> Se detiene todo y eliges: seguir, algo más fácil, saltar o salir.</span></li></ol></div>`}
       <div class="card tight">${weekStrip()}</div>
       ${!S().settings.hideInstall && !((window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone) ? '<div class="card tight row"><span style="font-size:24px">📲</span><div class="grow small"><b>Instálala en tu móvil</b><div class="muted">Icono propio y uso sin conexión.</div></div><button class="btn sm primary" data-act="go-install">Cómo</button><button class="icon-btn" data-act="hide-install" aria-label="Ocultar">✕</button></div>' : ''}
       <div class="stats"><div class="stat"><b>${s.week}/${plan.days.length}</b><span>Esta semana</span></div><div class="stat"><b>${s.streak}</b><span>Semanas seguidas</span></div><div class="stat"><b>${s.total}</b><span>Sesiones</span></div></div>
@@ -402,13 +405,11 @@ const App = (() => {
           <button class="row between" style="width:100%;background:none;border:0;padding:4px;cursor:pointer;text-align:left" data-act="toggle-day" data-d="${i}">
             <div><div class="small muted">${Planner.DAYS[d.weekday]}</div><h3 style="margin:0">${esc(d.name)}</h3><div class="small muted">${d.items.length} ejercicios · ~${Planner.estimateMin(d)} min</div></div><span class="muted">${open ? '▲' : '▼'}</span></button>
           ${open ? `
-            <div class="block-title">1 · Calentamiento <span class="muted">~${Planner.mobMin(d.warmup)} min</span></div>
-            <div class="list">${d.warmup.map(id => mobRow(id, 'calentamiento')).join('')}</div>
-            <div class="block-title">2 · Entrenamiento</div>
+            <details class="fold"><summary><span><span class="fold-t">1 · Calentamiento</span><br><span class="muted">${d.warmup.length} movimientos · ~${Planner.mobMin(d.warmup)} min</span></span></summary><div class="list">${d.warmup.map(id => mobRow(id, 'calentamiento')).join('')}</div></details>
+            <div class="block-title">2 · Ejercicios</div><p class="tiny muted" style="margin:-6px 4px 10px">Toca uno para ver cómo se hace</p>
             <div class="list">${d.items.map((it, ii) => itemRow(it, i, ii)).join('')}</div>
             ${d.finisher ? `<div class="card tight" style="background:var(--bg2);margin:8px 0"><b>⚡ Finisher</b> <span class="small muted">${d.finisher.rounds} rondas · ${d.finisher.work}s trabajo / ${d.finisher.rest}s descanso</span><div class="small">${d.finisher.ids.map(id => EX[id].n).join(' → ')}</div></div>` : ''}
-            <div class="block-title">3 · Estiramientos <span class="muted">~${Planner.mobMin(d.cooldown)} min</span></div>
-            <div class="list">${d.cooldown.map(id => mobRow(id, 'estiramiento')).join('')}</div>
+            <details class="fold"><summary><span><span class="fold-t">3 · Estiramientos</span><br><span class="muted">${d.cooldown.length} movimientos · ~${Planner.mobMin(d.cooldown)} min</span></span></summary><div class="list">${d.cooldown.map(id => mobRow(id, 'estiramiento')).join('')}</div></details>
             <button class="btn primary block" style="margin-top:10px" data-act="start" data-d="${i}">▶ Empezar esta sesión</button>` : ''}
         </div>`;
       }).join('')}
@@ -519,20 +520,30 @@ const App = (() => {
   }
 
   /* ================= BIBLIOTECA ================= */
-  function viewLibrary() {
+  function libList() {
     const p = S().profile;
+    const q = (ui.libQ || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     let list = EXERCISES.slice();
     if (ui.libFam !== 'all') list = list.filter(e => e.fam === ui.libFam);
     if (ui.libLvl !== 'all') list = list.filter(e => LEVEL_NAMES(e.lvl) === ui.libLvl);
     if (ui.libMine) list = list.filter(e => Planner.hasEq(e, p.equipment));
-    list.sort((a, b) => (a.fam === b.fam ? a.lvl - b.lvl : Object.keys(FAMILIES).indexOf(a.fam) - Object.keys(FAMILIES).indexOf(b.fam)));
+    if (q) list = list.filter(e => (e.n + ' ' + e.musc).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(q));
+    return list.sort((a, b) => (a.fam === b.fam ? a.lvl - b.lvl : Object.keys(FAMILIES).indexOf(a.fam) - Object.keys(FAMILIES).indexOf(b.fam)));
+  }
+  function libGrid() {
+    const list = libList();
+    return `<p class="result-count">${list.length} ${list.length === 1 ? 'ejercicio' : 'ejercicios'}</p>` + (list.length
+      ? `<div class="exgrid">${list.map(e => `<button class="excard" data-act="ex" data-id="${e.id}">${Fig.svg(e.id)}<b>${esc(e.n)}</b><span class="meta">${FAMILIES[e.fam].short}</span><span><span class="badge ${U.lvlCls(e.lvl)}">${LEVEL_NAMES(e.lvl)} · ${e.lvl}</span></span></button>`).join('')}</div>`
+      : '<div class="card muted">No hay ejercicios con estos filtros. Prueba a quitar alguno.</div>');
+  }
+  function viewLibrary() {
     const c = (k, v, l) => `<button class="chip ${ui[k] === v ? 'on' : ''}" data-act="lib" data-k="${k}" data-v="${v}">${l}</button>`;
     return `
-      <div class="top"><div><div class="small muted">${EXERCISES.length} ejercicios</div><h1>Ejercicios</h1></div></div>
-      <div class="chips" style="margin-bottom:10px">${c('libFam', 'all', 'Todos')}${Object.entries(FAMILIES).map(([k, f]) => c('libFam', k, f.short)).join('')}</div>
-      <div class="chips" style="margin-bottom:10px">${c('libLvl', 'all', 'Todos los niveles')}${['Principiante', 'Intermedio', 'Avanzado'].map(l => c('libLvl', l, l)).join('')}</div>
-      <div class="chips" style="margin-bottom:14px"><button class="chip ${ui.libMine ? 'on' : ''}" data-act="lib-mine">🎒 Solo con mi material</button></div>
-      ${list.length ? `<div class="exgrid">${list.map(e => `<button class="excard" data-act="ex" data-id="${e.id}">${Fig.svg(e.id)}<b>${esc(e.n)}</b><span class="meta">${FAMILIES[e.fam].short}</span><span><span class="badge ${U.lvlCls(e.lvl)}">Nivel ${e.lvl}</span></span></button>`).join('')}</div>` : '<div class="card muted">No hay ejercicios con estos filtros.</div>'}`;
+      <div class="top"><div><div class="small muted">Técnica, niveles y progresiones</div><h1>Ejercicios</h1></div></div>
+      <label class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="libq" type="text" placeholder="Buscar: flexiones, glúteo, plancha…" value="${esc(ui.libQ || '')}" aria-label="Buscar ejercicio"></label>
+      <div class="chips hscroll" style="margin-bottom:8px">${c('libFam', 'all', 'Todos')}${Object.entries(FAMILIES).map(([k, f]) => c('libFam', k, f.short)).join('')}</div>
+      <div class="chips hscroll" style="margin-bottom:12px">${c('libLvl', 'all', 'Cualquier nivel')}${['Principiante', 'Intermedio', 'Avanzado'].map(l => c('libLvl', l, l)).join('')}<button class="chip ${ui.libMine ? 'on' : ''}" data-act="lib-mine">Con mi material</button></div>
+      <div id="libgrid">${libGrid()}</div>`;
   }
 
   /* ================= PERFIL ================= */
@@ -563,7 +574,6 @@ const App = (() => {
       ${tog('sound', 'Sonidos', 'Pitidos en la cuenta atrás')}
       ${tog('vibrate', 'Vibración', 'Al terminar descansos e intervalos')}
       <label class="field"><span>Cuenta atrás antes de ejercicios por tiempo</span><select data-act="prep">${[3, 5, 10].map(v => `<option value="${v}" ${set.prep === v ? 'selected' : ''}>${v} segundos</option>`).join('')}</select></label>
-      <label class="field"><span>Tema</span><select data-act="theme">${[['auto', 'Automático'], ['dark', 'Oscuro'], ['light', 'Claro']].map(([v, l]) => `<option value="${v}" ${set.theme === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
       <div class="section-title">Música</div>
       ${window.Music ? Music.settingsHtml() : ''}
       <div class="section-title">Instalación</div>
@@ -574,11 +584,10 @@ const App = (() => {
       <p class="tiny muted center" style="margin-top:20px">Tus datos se guardan solo en este dispositivo. Haz una copia de seguridad de vez en cuando.<br>Esta app no sustituye el consejo médico.</p>`;
   }
 
-  let themeSet = false;
+  // La app tiene un único tema claro. Si una versión anterior guardó un tema, se limpia.
   function applyTheme() {
-    const t = S().settings.theme;
-    // En 'auto' no se toca el atributo para respetar el tema del sistema o del visor
-    if (t === 'auto') { if (themeSet) document.documentElement.removeAttribute('data-theme'); themeSet = false; } else { document.documentElement.dataset.theme = t; themeSet = true; }
+    const st = S().settings;
+    if (st.theme && st.theme !== 'auto') { document.documentElement.removeAttribute('data-theme'); st.theme = 'auto'; Store.save(); }
   }
 
   /* ================= EVENTOS ================= */
@@ -595,6 +604,7 @@ const App = (() => {
     install: async () => { if (!installEvt) return; installEvt.prompt(); try { await installEvt.userChoice; } catch (e) { /* noop */ } installEvt = null; render(); },
     'copy-url': () => { try { navigator.clipboard.writeText(APP_URL).then(() => toast('Dirección copiada'), () => toast('Mantén pulsada la dirección para copiarla')); } catch (e) { toast('Mantén pulsada la dirección para copiarla'); } },
     'go-install': () => { go('profile'); setTimeout(() => { const el = document.getElementById('install'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }, 50); },
+    'hide-howto': () => { S().settings.hideHowto = true; Store.save(); render(); },
     'hide-install': () => { S().settings.hideInstall = true; Store.save(); render(); },
     close: () => closeSheet(),
     'ob-next': () => { if (obStep < OB_STEPS.length - 1) { obStep++; window.scrollTo(0, 0); render(); } },
@@ -701,6 +711,7 @@ const App = (() => {
     });
     document.addEventListener('input', e => {
       const el = e.target;
+      if (el.id === 'libq') { ui.libQ = el.value; const g = document.getElementById('libgrid'); if (g) g.innerHTML = libGrid(); return; }
       if (el.dataset.bind && ob) {
         const v = el.type === 'number' ? (el.value === '' ? '' : +el.value) : el.value;
         setPath(ob, el.dataset.bind, v);
@@ -715,7 +726,6 @@ const App = (() => {
       const st = S();
       if (el.dataset.act === 'prog-ex') { ui.progEx = el.value; render(); }
       if (el.dataset.act === 'prep') { st.settings.prep = +el.value; Store.save(); }
-      if (el.dataset.act === 'theme') { st.settings.theme = el.value; Store.save(); applyTheme(); }
       if (el.id === 'importFile' && el.files[0]) {
         const r = new FileReader();
         r.onload = () => {

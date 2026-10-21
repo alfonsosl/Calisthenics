@@ -313,7 +313,9 @@ const Workout = (() => {
         ${easier ? `<button class="btn block" data-wo="easier">⬇️ Seguir con algo más fácil<span class="small muted" style="display:block;font-weight:500">${esc(easier.n)}</span></button>` : ''}
         ${exName ? `<button class="btn block" data-wo="skip-ex">⏭ Me molesta: saltar ${esc(exName)}</button>` : ''}
         <button class="btn ghost block" data-wo="stop-finish">🏁 Terminar y guardar lo hecho</button>
+        <button class="btn ghost block" data-wo="later">🚪 Salir y seguir más tarde</button>
       </div>
+      <p class="center" style="margin:12px 0 0"><button class="link" data-wo="discard">Descartar la sesión sin guardar</button></p>
       <div class="alert"><b>Para del todo y pide ayuda</b> si notas dolor en el pecho, mareo, falta de aire que no mejora al descansar, palpitaciones fuertes o un dolor intenso en una articulación. Emergencias: <a href="tel:112"><b>112</b></a>.</div>
       <p class="tiny muted">Molestia leve: baja la intensidad. Dolor agudo o punzante: no continúes con ese ejercicio hoy.</p>
     </div></div>`;
@@ -327,7 +329,7 @@ const Workout = (() => {
   function header(title, summary) {
     const pct = W.i / (W.steps.length - 1) * 100;
     const music = window.Music ? Music.barHtml() : '';
-    return `<div class="wo-top"><button class="icon-btn" data-wo="exit" aria-label="Salir">✕</button><div class="ttl"><b>${esc(W.day.name)}</b><span class="small muted">${title}</span></div><span class="clock" id="wo-clock">${U.fmt((Date.now() - W.startedAt) / 1000)}</span>${summary ? '' : '<button class="stop-btn" data-wo="stop" aria-label="Parar el entrenamiento">✋ Parar</button>'}</div><div class="wo-prog"><div style="width:${pct}%"></div></div>${music}`;
+    return `<div class="wo-top"><div class="ttl"><b>${esc(W.day.name)}</b><span class="small muted">${title}</span></div><span class="clock" id="wo-clock">${U.fmt((Date.now() - W.startedAt) / 1000)}</span>${summary ? '' : '<button class="stop-btn" data-wo="stop" aria-label="Parar el entrenamiento">✋ Parar</button>'}</div><div class="wo-prog"><div style="width:${pct}%"></div></div>${music}`;
   }
   function setDots(it, s) {
     return `<div class="sets-dots">${Array.from({ length: it.sets }, (_, k) => `<i class="${k < s ? 'done' : k === s ? 'cur' : ''}"></i>`).join('')}</div>`;
@@ -350,10 +352,10 @@ const Workout = (() => {
   // Controles de los pasos con cuenta atrás: Empezar / Pausa / Reanudar
   function cdControls() {
     const t = W.timer;
-    const nav = (mid) => `<div class="row"><button class="btn ghost" data-wo="prev" aria-label="Anterior">⏮</button>${mid}<button class="btn ghost" data-wo="skip">Saltar ⏭</button></div>`;
-    if (!t.started) return `<button class="btn primary lg block" data-wo="go">▶ Empezar</button>${nav('<span class="grow"></span>')}`;
-    if (t.paused != null) return `<button class="btn primary lg block" data-wo="pause">▶ Reanudar</button>${nav('<span class="grow"></span>')}`;
-    return nav('<button class="btn grow" data-wo="pause">⏸ Pausa</button>');
+    const nav = `<div class="ctrl-row"><button class="btn sm" data-wo="prev">◀ Anterior</button><button class="btn sm" data-wo="skip">Saltar ▶</button></div>`;
+    if (!t.started) return `<button class="btn primary lg block" data-wo="go">▶ Empezar</button><p class="hint">Colócate en posición y pulsa Empezar</p>${nav}`;
+    if (t.paused != null) return `<button class="btn primary lg block" data-wo="pause">▶ Reanudar</button><p class="hint">En pausa</p>${nav}`;
+    return `<button class="btn lg block" data-wo="pause">⏸ Pausa</button><p class="hint">Pasará solo al siguiente cuando acabe el tiempo</p>${nav}`;
   }
   const stateLabel = t => (!t.started ? 'Pulsa Empezar cuando estés listo' : t.paused != null ? 'En pausa' : '');
 
@@ -395,11 +397,11 @@ const Workout = (() => {
       }
       if (t && t.kind === 'hold') {
         const secs = elapsed(t);
-        return head + `${ring(`<div><b id="hold-num">${Math.floor(secs)}</b><span>${t.pausedAt ? 'En pausa' : `segundos · objetivo ${it.target[0]}–${it.target[1]}`}</span></div>`, Math.min(1, secs / it.target[1]), 'work')}<div class="wo-actions"><button class="btn primary lg block" data-wo="stop-hold">⏹ Terminar</button>${pauseBtn(t.pausedAt)}</div></div>`;
+        return head + `${ring(`<div><b id="hold-num">${Math.floor(secs)}</b><span>${t.pausedAt ? 'En pausa' : `segundos · objetivo ${it.target[0]}–${it.target[1]}`}</span></div>`, Math.min(1, secs / it.target[1]), 'work')}<div class="wo-actions"><button class="btn primary lg block" data-wo="stop-hold">⏹ Terminar</button><p class="hint">Aguanta y pulsa Terminar cuando no puedas mantener la postura</p>${pauseBtn(t.pausedAt)}</div></div>`;
       }
       const v = defaultVal(it, st.s);
       return head + `<div class="wo-actions">
-        <button class="btn primary lg block" data-wo="start-hold">▶ Empezar <span class="small" style="font-weight:500">(${S().settings.prep} s para colocarte)</span></button>
+        <button class="btn primary lg block" data-wo="start-hold">▶ Empezar</button><p class="hint">Tendrás ${S().settings.prep} segundos para colocarte</p>
         <details><summary>Registrar sin cronómetro</summary>
           <div class="stepper"><button data-wo="dec" aria-label="Menos">−</button><div class="val"><span id="val">${v}</span><span class="unit">segundos</span></div><button data-wo="inc" aria-label="Más">+</button></div>
           <button class="btn block" data-wo="done">Guardar serie</button></details>
@@ -408,16 +410,16 @@ const Workout = (() => {
     // Series por repeticiones: Empezar -> Terminar -> anotar repeticiones
     if (t && t.kind === 'reps') {
       return head + `${ring(`<div><b id="run-num">${U.fmt(elapsed(t))}</b><span>${t.pausedAt ? 'En pausa' : 'Serie en curso'}</span></div>`, 1, 'small work')}
-        <div class="wo-actions"><button class="btn primary lg block" data-wo="end-reps">✓ Terminar serie</button>${pauseBtn(t.pausedAt)}</div></div>`;
+        <div class="wo-actions"><button class="btn primary lg block" data-wo="end-reps">✓ Terminar serie</button><p class="hint">Haz tus repeticiones y pulsa Terminar</p></div></div>`;
     }
     if (t && t.kind === 'log') {
       const v = defaultVal(it, st.s);
       return head + `<p class="center small muted" style="margin:6px 0 0">¿Cuántas has hecho${ex.uni ? ' por lado' : ''}? (${U.fmt(t.secs)})</p>
         <div class="stepper"><button data-wo="dec" aria-label="Menos">−</button><div class="val"><span id="val">${v}</span><span class="unit">${ex.uni ? 'reps por lado' : 'repeticiones'}</span></div><button data-wo="inc" aria-label="Más">+</button></div>
-        <div class="wo-actions"><button class="btn primary lg block" data-wo="done">Guardar serie</button></div></div>`;
+        <div class="wo-actions"><button class="btn primary lg block" data-wo="done">Guardar y seguir</button><p class="hint">Ajusta el número con − y + si hace falta</p></div></div>`;
     }
-    return head + `<div class="wo-actions"><button class="btn primary lg block" data-wo="start-reps">▶ Empezar serie</button>
-      <div class="row"><button class="btn ghost grow sm" data-wo="log-now">Ya la hice: anotar</button><button class="btn ghost grow sm" data-wo="skipset">Saltar serie</button></div></div></div>`;
+    return head + `<div class="wo-actions"><button class="btn primary lg block" data-wo="start-reps">▶ Empezar serie</button><p class="hint">Colócate en posición y pulsa Empezar</p>
+      <div class="ctrl-row"><button class="btn sm" data-wo="log-now">Ya la hice</button><button class="btn sm" data-wo="skipset">Saltar serie ▶</button></div></div></div>`;
   }
 
   function viewRest(st, label = 'Descanso') {
@@ -425,6 +427,7 @@ const Workout = (() => {
     const paused = W.timer.paused != null;
     return `${header(label)}<div class="wo-body">
       <div class="phase rest">${label}${paused ? ' · en pausa' : ''}</div>
+      <p class="hint" style="text-align:left">${st.k === 'switch' ? 'Cambia al otro lado' : 'Descansa: el siguiente ejercicio esperará a que pulses Empezar'}</p>
       ${ring(`<div><b id="t-num">${U.fmt(Math.ceil(left))}</b><span>${st.fin ? 'Prepárate para el finisher' : 'Respira y recupera'}</span></div>`, left / W.timer.total)}
       <div class="row" style="justify-content:center;gap:10px;margin-bottom:14px"><button class="btn sm ghost" data-wo="minus">−15 s</button><button class="btn sm ghost" data-wo="pause">${paused ? '▶ Reanudar' : '⏸ Pausa'}</button><button class="btn sm ghost" data-wo="plus">+15 s</button></div>
       ${nextCard()}
@@ -511,9 +514,11 @@ const Workout = (() => {
       <div class="stack"><button class="btn primary block" data-wo="finish-now">Terminar y guardar lo hecho</button><button class="btn block" data-wo="later">Continuar más tarde</button><button class="btn danger block" data-wo="discard">Descartar sesión</button></div>`, 'exit');
   }
   function onBack() {
+    // Botón «atrás» del móvil: abre o cierra el menú de parada
     if (document.querySelector('.sheet-wrap')) { App.closeSheet(true); }
     else if (W.stopped) resumeFromStop();
-    else exitSheet();
+    else if (cur().k === 'summary') exitSheet();
+    else stop();
     try { history.pushState({ workout: 1 }, ''); } catch (e) { /* noop */ }
   }
 
